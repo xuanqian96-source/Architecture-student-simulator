@@ -150,94 +150,97 @@ export default function StatsSidebar() {
                 </div>
             </div>
 
-            {/* 作品集入口 */}
-            <button
-                onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'portfolio' } })}
-                style={{
-                    width: '100%',
-                    padding: '20px',
-                    background: 'white',
-                    color: '#334155', // 深灰字
-                    border: 'none',
-                    borderRadius: '16px',
-                    fontWeight: '800',
-                    fontSize: '15px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+            {/* 作品集与分流选项包裹区（用于引导定位） */}
+            <div className="sidebar-bottom-actions" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* 作品集入口 */}
+                <button
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'portfolio' } })}
+                    style={{
+                        width: '100%',
+                        padding: '20px',
+                        background: 'white',
+                        color: '#334155', // 深灰字
+                        border: 'none',
+                        borderRadius: '16px',
+                        fontWeight: '800',
+                        fontSize: '15px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                        transition: 'all 0.2s ease',
+                        marginTop: '0' // 依靠 flex gap 保证等距
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)'; }}
+                >
+                    <span style={{ fontSize: '18px' }}>📁</span>
+                    <span>个人作品集</span>
+                    {state.portfolio.length > 0 && (
+                        <span style={{
+                            background: '#F59E0B',
+                            color: 'white',
+                            fontSize: '12px',
+                            padding: '2px 6px',
+                            borderRadius: '10px',
+                            marginLeft: '4px'
+                        }}>
+                            {state.portfolio.length}
+                        </span>
+                    )}
+                </button>
+
+                {/* 毕业分流选项 (栅格布局，一排两列) */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-                    transition: 'all 0.2s ease',
-                    marginTop: '0' // 依靠 flex gap 保证等距
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)'; }}
-            >
-                <span style={{ fontSize: '18px' }}>📁</span>
-                <span>个人作品集</span>
-                {state.portfolio.length > 0 && (
-                    <span style={{
-                        background: '#F59E0B',
-                        color: 'white',
-                        fontSize: '12px',
-                        padding: '2px 6px',
-                        borderRadius: '10px',
-                        marginLeft: '4px'
-                    }}>
-                        {state.portfolio.length}
-                    </span>
-                )}
-            </button>
+                    marginTop: '0'
+                }}>
+                    {/* 竞赛投稿 */}
+                    <GraduationOptionButton
+                        icon="🏅" label="竞赛投稿"
+                        isActive={true}
+                        onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'competitions' } })}
+                    />
 
-            {/* 毕业分流选项 (栅格布局，一排两列) */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '8px',
-                marginTop: '0'
-            }}>
-                {/* 竞赛投稿 */}
-                <GraduationOptionButton
-                    icon="🏅" label="竞赛投稿"
-                    isActive={true}
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'competitions' } })}
-                />
+                    {/* 国外留学 (大一激活雅思考试，大五激活申请) */}
+                    <GraduationOptionButton
+                        icon="✈️" label="出国留学"
+                        isActive={true}
+                        onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'studyAbroad' } })}
+                    />
 
-                {/* 国外留学 (大一激活雅思考试，大五激活申请) */}
-                <GraduationOptionButton
-                    icon="✈️" label="出国留学"
-                    isActive={true}
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'studyAbroad' } })}
-                />
+                    {/* 申请保研 (大四结束，即第4年12周后激活) */}
+                    <GraduationOptionButton
+                        icon="👑" label="申请保研"
+                        isActive={progress.totalWeeks >= 48}
+                        onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'postgrad' } })}
+                    />
 
-                {/* 申请保研 (大四结束，即第4年12周后激活) */}
-                <GraduationOptionButton
-                    icon="👑" label="申请保研"
-                    isActive={progress.totalWeeks >= 48}
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'postgrad' } })}
-                />
+                    {/* 实习与求职 (全年级激活寻找实习，大五激活全职) */}
+                    <GraduationOptionButton
+                        icon="🤝" label="实习与工作"
+                        isActive={true}
+                        onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'jobSearch' } })}
+                    />
 
-                {/* 实习与求职 (全年级激活寻找实习，大五激活全职) */}
-                <GraduationOptionButton
-                    icon="🤝" label="实习与工作"
-                    isActive={true}
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'jobSearch' } })}
-                />
+                    {/* 参加考研 (大五激活) */}
+                    <GraduationOptionButton
+                        icon="📚" label="参加考研"
+                        isActive={progress.year >= 5}
+                        onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examGrad' } })}
+                    />
 
-                {/* 参加考研 (大五激活) */}
-                <GraduationOptionButton
-                    icon="📚" label="参加考研"
-                    isActive={progress.year >= 5}
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examGrad' } })}
-                />
-
-                {/* 决定考公 (大五激活) */}
-                <GraduationOptionButton
-                    icon="🍵" label="考公选调"
-                    isActive={progress.year >= 5}
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examCivil' } })}
-                />
+                    {/* 决定考公 (大五激活) */}
+                    <GraduationOptionButton
+                        icon="🍵" label="考公选调"
+                        isActive={progress.year >= 5}
+                        onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examCivil' } })}
+                    />
+                </div>
             </div>
 
             {/* 时间看板 (置于底部) */}

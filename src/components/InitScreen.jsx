@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
 import { generateIdentity } from '../data/identities';
+import ArchivesModal from './ArchivesModal';
 
 // ── 稀有度工具函数 ──────────────────────────────────────────────────────────
 // 概率 = school.probability × family.probability
@@ -68,6 +69,7 @@ export default function InitScreen() {
     const [cardFlipped, setCardFlipped] = useState(false);
     const [rarity, setRarity] = useState(null);
     const [drawCount, setDrawCount] = useState(0); // 抽取次数记录
+    const [showArchives, setShowArchives] = useState(false);
     const MAX_DRAWS = 3;
 
     if (!gameContext) {
@@ -370,6 +372,39 @@ export default function InitScreen() {
                     </div>
                 )}
             </div>
+
+            {/* 顶层绝对定位的快捷设置与档案馆入口 */}
+            {phase === 'intro' && (
+                <div style={{ position: 'fixed', bottom: '24px', right: '32px', zIndex: 100 }}>
+                    <button
+                        onClick={() => setShowArchives(true)}
+                        style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255,255,255,0.3)',
+                            padding: '12px 20px',
+                            borderRadius: '16px',
+                            color: 'white',
+                            fontWeight: '800',
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                    >
+                        <span style={{ fontSize: '20px' }}>🏛️</span>
+                        档案馆：我的一百种人生
+                    </button>
+                </div>
+            )}
+
+            {/* 档案馆模态窗 */}
+            {showArchives && <ArchivesModal onClose={() => setShowArchives(false)} />}
         </div>
     );
 }

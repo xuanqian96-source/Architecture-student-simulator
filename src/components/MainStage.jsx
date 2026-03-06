@@ -1,18 +1,30 @@
 // 主舞台容器组件 - 包含叙事窗口、当前的课题导师面板和底部行动中心
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGame } from '../logic/gameState';
 import { getMissionProgress, isMissionComplete } from '../data/tutors';
 import NarrativeWindow from './NarrativeWindow';
 import ActionCenter from './ActionCenter';
+import SettingsModal from './SettingsModal';
 
 export default function MainStage() {
-    const { state } = useGame();
+    const { state, dispatch } = useGame();
+    const [showSettings, setShowSettings] = React.useState(false);
     const tutor = state.tutor;
     const mission = state.tutorMission;
     const tracking = state.tutorMissionTracking;
     const missionComplete = mission ? isMissionComplete(mission, state, tracking) : false;
     const missionProgress = mission ? getMissionProgress(mission, state, tracking) : '';
+
+    // 检测是否是开局第一回合，且尚未显示过指引
+    useEffect(() => {
+        if (state.progress.totalWeeks === 1 && !state.tutorialShown) {
+            // 标记为已展示，防止反复触发
+            dispatch({ type: 'MARK_TUTORIAL_SHOWN' });
+            // 唤出全屏指引
+            dispatch({ type: 'TOGGLE_TUTORIAL', payload: true });
+        }
+    }, [state.progress.totalWeeks, state.tutorialShown, dispatch]);
 
     return (
         <div className="main-stage">
@@ -24,7 +36,23 @@ export default function MainStage() {
                 </div>
 
                 {/* 右半区：课题与导师合并面板 */}
-                <div className="project-tutor-panel">
+                <div className="project-tutor-panel" style={{ position: 'relative' }}>
+                    {/* 右上角绝对定位的设置小齿轮 */}
+                    <button
+                        onClick={() => setShowSettings(true)}
+                        style={{
+                            position: 'absolute', top: '12px', right: '12px',
+                            background: 'transparent', border: 'none', cursor: 'pointer',
+                            fontSize: '18px', opacity: 0.6, transition: 'all 0.2s',
+                            padding: '4px', zIndex: 10
+                        }}
+                        onMouseOver={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.transform = 'rotate(30deg)' }}
+                        onMouseOut={e => { e.currentTarget.style.opacity = 0.6; e.currentTarget.style.transform = 'rotate(0)' }}
+                        title="系统设置"
+                    >
+                        ⚙️
+                    </button>
+
                     {/* 上半部：当前课题 (极限压榨无用留白以让位，绝不修改字号) */}
                     <div style={{
                         padding: '10px 16px 6px 16px', // 进一步压榨内外留空
@@ -152,6 +180,8 @@ export default function MainStage() {
             </div>
 
             <ActionCenter />
+            {/* 顶层挂载的全局设置系统 */}
+            {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         </div>
     );
 }

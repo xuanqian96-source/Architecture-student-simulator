@@ -2,15 +2,28 @@
 
 import React from 'react';
 import { useGame } from '../logic/gameState';
+import { saveEndingRecord } from '../data/endingData';
 
 export default function EndingScreen() {
-    const { state } = useGame();
+    const { state, dispatch } = useGame();
     const { ending } = state.ui;
+
+    // 当最终展示结局时持久化记录徽章
+    React.useEffect(() => {
+        if (ending && ending.id) {
+            saveEndingRecord(ending.id);
+        }
+    }, [ending]);
 
     if (!ending) return null;
 
-    const handleRestart = () => {
+    const handleHardRestart = () => {
         window.location.reload();
+    };
+
+    const handleNewLife = () => {
+        // 轻量级状态清零，回到抽选导师前主界面
+        dispatch({ type: 'HARD_RESET_GAME' });
     };
 
     const getEndingStyle = (id) => {
@@ -92,9 +105,25 @@ export default function EndingScreen() {
                     </div>
                 </div>
 
-                <button className="restart-button" onClick={handleRestart}>
-                    重新开始
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <button className="restart-button" onClick={handleNewLife} style={{
+                        background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                        boxShadow: '0 8px 20px rgba(59, 130, 246, 0.4)'
+                    }}>
+                        ✨ 重新开始新人生
+                    </button>
+                    {/* 这个选项由于破坏性较强作为底层兜底保留 */}
+                    <button className="restart-button" onClick={handleHardRestart} style={{
+                        background: 'transparent',
+                        border: '2px solid rgba(255,255,255,0.2)',
+                        boxShadow: 'none',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontSize: '15px',
+                        padding: '12px'
+                    }}>
+                        强制刷新浏览器
+                    </button>
+                </div>
             </div>
         </div>
     );

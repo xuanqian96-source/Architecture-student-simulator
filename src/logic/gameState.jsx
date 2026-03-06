@@ -166,6 +166,8 @@ function gameReducer(state, action) {
                 qualityDoubleCount: 0,
                 weeklyStressReduction: 0,
                 qualityMultiplier: 1,
+                // 是否开启/显示全局新手指引
+                tutorialActive: false,
                 pendingNewSemester: {
                     candidates,
                     newProject: firstProject,
@@ -1330,6 +1332,26 @@ ${modelOption.description}
                     ending,
                     narrative: ending.description
                 }
+            };
+        }
+
+        case 'TOGGLE_TUTORIAL': {
+            return {
+                ...state,
+                tutorialActive: action.payload !== undefined ? action.payload : !state.tutorialActive
+            };
+        }
+
+        case 'MARK_TUTORIAL_SHOWN': {
+            return {
+                ...state,
+                tutorialShown: true
+            };
+        }
+
+        case 'HARD_RESET_GAME': {
+            return {
+                ...initialState
             };
         }
 

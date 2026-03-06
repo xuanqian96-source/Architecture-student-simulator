@@ -24,10 +24,11 @@ import InternScreen from './components/InternScreen';
 import CareerScreen from './components/CareerScreen';
 import ExamGradScreen from './components/ExamGradScreen';
 import ExamCivilScreen from './components/ExamCivilScreen';
+import SpotlightTour from './components/SpotlightTour';
 import './App.css';
 
 function GameContent() {
-  const { state } = useGame();
+  const { state, dispatch } = useGame();
   const { screen } = state.ui;
 
   // 初始化界面
@@ -109,6 +110,11 @@ function GameContent() {
 
       {/* 事件弹窗 */}
       <EventModal />
+
+      {/* 新手指引全屏遮罩 */}
+      {state.tutorialActive && (
+        <SpotlightTour onComplete={() => dispatch({ type: 'TOGGLE_TUTORIAL', payload: false })} />
+      )}
     </div>
   );
 }
