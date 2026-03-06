@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
+import { shouldTriggerReview, isMiddtermWeek } from '../logic/reviewSystem';
 import SkillModal from './SkillModal';
 
 
@@ -16,6 +17,16 @@ export default function ActionCenter() {
 
     const handleNextWeek = () => {
         dispatch({ type: ActionTypes.NEXT_WEEK });
+    };
+
+    // 动态按钮文字
+    const getNextWeekLabel = () => {
+        const week = state.progress.week;
+        const flags = state.weeklyFlags || {};
+        if (shouldTriggerReview(week) && !flags.tutorJudgmentShown) {
+            return '📋 进入评图流程';
+        }
+        return '下一周';
     };
 
     const handleOpenShop = () => {
@@ -169,7 +180,7 @@ export default function ActionCenter() {
                         onClick={handleNextWeek}
                     >
                         <span className="button-icon">⏭️</span>
-                        <span>下一周</span>
+                        <span>{getNextWeekLabel()}</span>
                     </button>
                 </div>
             </div>

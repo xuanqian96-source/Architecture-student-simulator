@@ -10,9 +10,10 @@ export function conductMidtermReview(gameState) {
     if (currentProject.progress < 50) {
         return {
             passed: false,
+            grade: 'F', // 进度不达标，固定为 F
             type: 'progressFail',
             comment: getReviewComment('progressFail'),
-            consequence: 'warning'
+            consequence: 'fail' // F计入挂科
         };
     }
 
@@ -27,7 +28,7 @@ export function conductMidtermReview(gameState) {
         threshold,
         quality: currentProject.quality,
         comment: getReviewComment(`grade${grade}`),
-        consequence: grade === 'E' ? 'warning' : 'pass'
+        consequence: grade === 'D' ? 'warning' : 'pass' // D不计入挂科，但给与警告
     };
 }
 
@@ -39,9 +40,10 @@ export function conductFinalReview(gameState) {
     if (currentProject.progress < 100) {
         return {
             passed: false,
+            grade: 'F',
             type: 'progressFail',
             comment: getReviewComment('progressFail'),
-            consequence: 'warning'
+            consequence: 'fail' // 进度不达标计入挂科
         };
     }
 
@@ -56,7 +58,7 @@ export function conductFinalReview(gameState) {
         threshold,
         quality: currentProject.quality,
         comment: getReviewComment(`grade${grade}`),
-        consequence: grade === 'E' ? 'warning' : 'pass'
+        consequence: grade === 'D' ? 'warning' : 'pass'
     };
 }
 

@@ -33,7 +33,7 @@ const RARITY_BAR = {
 };
 
 export default function StatsSidebar() {
-    const { state } = useGame();
+    const { state, dispatch } = useGame();
     const { identity, attributes, progress } = state;
 
     if (!identity) return null;
@@ -150,18 +150,138 @@ export default function StatsSidebar() {
                 </div>
             </div>
 
-            {/* 时间看板 */}
-            <div className="time-card">
+            {/* 作品集入口 */}
+            <button
+                onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'portfolio' } })}
+                style={{
+                    width: '100%',
+                    padding: '20px',
+                    background: 'white',
+                    color: '#334155', // 深灰字
+                    border: 'none',
+                    borderRadius: '16px',
+                    fontWeight: '800',
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                    transition: 'all 0.2s ease',
+                    marginTop: '0' // 依靠 flex gap 保证等距
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)'; }}
+            >
+                <span style={{ fontSize: '18px' }}>📁</span>
+                <span>个人作品集</span>
+                {state.portfolio.length > 0 && (
+                    <span style={{
+                        background: '#F59E0B',
+                        color: 'white',
+                        fontSize: '12px',
+                        padding: '2px 6px',
+                        borderRadius: '10px',
+                        marginLeft: '4px'
+                    }}>
+                        {state.portfolio.length}
+                    </span>
+                )}
+            </button>
+
+            {/* 毕业分流选项 (栅格布局，一排两列) */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '8px',
+                marginTop: '0'
+            }}>
+                {/* 竞赛投稿 */}
+                <GraduationOptionButton
+                    icon="🏅" label="竞赛投稿"
+                    isActive={true}
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'competitions' } })}
+                />
+
+                {/* 国外留学 (大一激活雅思考试，大五激活申请) */}
+                <GraduationOptionButton
+                    icon="✈️" label="出国留学"
+                    isActive={true}
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'studyAbroad' } })}
+                />
+
+                {/* 申请保研 (大四结束，即第4年12周后激活) */}
+                <GraduationOptionButton
+                    icon="👑" label="申请保研"
+                    isActive={progress.totalWeeks >= 48}
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'postgrad' } })}
+                />
+
+                {/* 实习与求职 (全年级激活寻找实习，大五激活全职) */}
+                <GraduationOptionButton
+                    icon="🤝" label="实习与工作"
+                    isActive={true}
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'jobSearch' } })}
+                />
+
+                {/* 参加考研 (大五激活) */}
+                <GraduationOptionButton
+                    icon="📚" label="参加考研"
+                    isActive={progress.year >= 5}
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examGrad' } })}
+                />
+
+                {/* 决定考公 (大五激活) */}
+                <GraduationOptionButton
+                    icon="🍵" label="考公选调"
+                    isActive={progress.year >= 5}
+                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examCivil' } })}
+                />
+            </div>
+
+            {/* 时间看板 (置于底部) */}
+            <div className="time-card" style={{ marginTop: 'auto' }}>
                 <div className="time-display">
-                    本科第{progress.year}学年 · {progress.semester % 2 === 1 ? '上学期' : '下学期'}
+                    本科第{progress.year}学年
                 </div>
                 <div className="time-label">
                     Week {progress.week} / 12
                 </div>
                 <div className="time-label" style={{ marginTop: '8px', fontSize: '11px' }}>
-                    总计: {(progress.semester - 1) * 12 + progress.week} / 120 周
+                    总计: {progress.totalWeeks} / 60 周
                 </div>
             </div>
         </div>
+    );
+}
+
+// 分流按钮子组件
+function GraduationOptionButton({ icon, label, isActive, onClick }) {
+    return (
+        <button
+            onClick={isActive ? onClick : undefined}
+            style={{
+                padding: '12px 6px',
+                background: isActive ? 'white' : '#E2E8F0',
+                color: isActive ? '#334155' : '#94A3B8',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: isActive ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: isActive ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => { if (isActive) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 10px rgba(0,0,0,0.08)'; } }}
+            onMouseOut={(e) => { if (isActive) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)'; } }}
+        >
+            <span style={{ fontSize: '20px', filter: isActive ? 'none' : 'grayscale(100%) opacity(0.5)' }}>{icon}</span>
+            <span>{label}</span>
+        </button>
     );
 }

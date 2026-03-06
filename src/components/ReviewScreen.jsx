@@ -126,6 +126,42 @@ export default function ReviewScreen() {
                     </div>
                 )}
 
+                {/* 如果有作品集入库荣誉，展示激动的表彰卡片 */}
+                {state.ui.newPortfolioProject && (
+                    <div style={{
+                        marginTop: '16px',
+                        marginBottom: '32px',
+                        padding: '24px',
+                        background: 'linear-gradient(135deg, #FFFBEB, #FEF3C7)',
+                        borderRadius: '16px',
+                        border: '2px solid #F59E0B',
+                        boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.2)',
+                        textAlign: 'center',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        animation: 'fadeInUp 0.6s ease-out forwards' // 如果想加上轻微上浮动画
+                    }}>
+                        <div style={{
+                            position: 'absolute',
+                            right: '-20px',
+                            bottom: '-20px',
+                            fontSize: '100px',
+                            opacity: 0.1,
+                            transform: 'rotate(-15deg)',
+                            pointerEvents: 'none'
+                        }}>🏅</div>
+                        <h3 style={{ margin: '0 0 10px 0', color: '#B45309', fontSize: '20px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '24px' }}>🏆</span> 杰出评图表现！
+                        </h3>
+                        <p style={{ margin: '0 0 16px 0', color: '#92400E', fontSize: '15px', fontWeight: 'bold' }}>
+                            课题 <span style={{ color: '#D97706', textDecoration: 'underline' }}>{state.ui.newPortfolioProject.title}</span> 荣获最高评定！
+                        </p>
+                        <div style={{ display: 'inline-block', background: '#F59E0B', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(245, 158, 11, 0.3)' }}>
+                            已永久收录至【荣誉作品集】
+                        </div>
+                    </div>
+                )}
+
                 {/* 继续按钮 */}
                 <button
                     onClick={handleContinue}

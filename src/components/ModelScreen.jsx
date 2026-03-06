@@ -23,19 +23,42 @@ export default function ModelScreen() {
             overflow: 'hidden'
         }}>
             {/* 标题 */}
-            <div style={{ marginBottom: '20px', flexShrink: 0 }}>
-                <h2 style={{
-                    fontSize: '22px',
-                    fontWeight: '800',
-                    color: '#1E293B',
-                    marginBottom: '8px'
-                }}>
-                    🏗️ 模型制作周
-                </h2>
-                <p style={{ fontSize: '15px', color: '#64748B', margin: 0 }}>
-                    请选择模型制作方案。模型质量直接影响评图成绩。当前余额:
-                    <strong style={{ color: '#3B82F6', marginLeft: '6px' }}>¥{money.toLocaleString()}</strong>
-                </p>
+            <div style={{ marginBottom: '20px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h2 style={{
+                        fontSize: '22px',
+                        fontWeight: '800',
+                        color: '#1E293B',
+                        marginBottom: '8px'
+                    }}>
+                        🏗️ 模型制作周
+                    </h2>
+                    <p style={{ fontSize: '15px', color: '#64748B', margin: 0 }}>
+                        请选择模型制作方案。模型质量直接影响评图成绩。当前余额:
+                        <strong style={{ color: '#3B82F6', marginLeft: '6px' }}>¥{money.toLocaleString()}</strong>
+                    </p>
+                </div>
+
+                {money > 0 && money < 200 && (
+                    <button
+                        onClick={() => dispatch({ type: ActionTypes.TRIGGER_BANKRUPT })}
+                        style={{
+                            padding: '10px 16px',
+                            background: '#FEE2E2',
+                            color: '#DC2626',
+                            border: '1px solid #FCA5A5',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#FECACA'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#FEE2E2'}
+                    >
+                        囊中羞涩 (放弃提交模型，触发破产结局)
+                    </button>
+                )}
             </div>
 
             {/* 选项网格 - 可滚动 */}

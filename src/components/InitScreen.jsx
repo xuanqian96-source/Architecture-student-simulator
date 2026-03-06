@@ -67,6 +67,8 @@ export default function InitScreen() {
     const [identity, setIdentity] = useState(null);
     const [cardFlipped, setCardFlipped] = useState(false);
     const [rarity, setRarity] = useState(null);
+    const [drawCount, setDrawCount] = useState(0); // 抽取次数记录
+    const MAX_DRAWS = 3;
 
     if (!gameContext) {
         return <div style={{ color: 'red', padding: '20px' }}>错误: GameContext未初始化</div>;
@@ -74,6 +76,11 @@ export default function InitScreen() {
     const { dispatch, ActionTypes } = gameContext;
 
     const handleDraw = () => {
+        // 第一抽不计入3次重抽次数；如果是由于重抽按钮点击，则增加次数
+        if (phase === 'result' && drawCount < MAX_DRAWS) {
+            setDrawCount(prev => prev + 1);
+        }
+
         const drawn = generateIdentity();
         const r = getRarity(drawn.school, drawn.family);
         setIdentity(drawn);
@@ -142,23 +149,39 @@ export default function InitScreen() {
 
                 {/* ── 阶段 1：简介 ── */}
                 {phase === 'intro' && <>
-                    <h1 style={{ fontSize: '46px', fontWeight: '900', color: '#667eea', marginBottom: '8px' }}>
+                    <h1 style={{ fontSize: '46px', fontWeight: '900', color: '#667eea', marginBottom: '8px', textAlign: 'center' }}>
                         建筑生模拟器
                     </h1>
-                    <p style={{ fontSize: '17px', color: '#64748B', marginBottom: '28px' }}>从硫酸纸到大师</p>
+                    <p style={{ fontSize: '17px', color: '#64748B', marginBottom: '28px', textAlign: 'center' }}>重生之我这一世绝不熬夜</p>
 
-                    <div style={{ background: '#F8FAFC', borderRadius: '16px', padding: '20px', marginBottom: '24px', textAlign: 'left' }}>
-                        <p style={{ fontSize: '15px', color: '#475569', marginBottom: '10px' }}>📚 <strong>游戏简介</strong></p>
-                        <p style={{ fontSize: '13px', color: '#64748B', lineHeight: '1.8', margin: 0 }}>
-                            欢迎来到建筑学院！经历5年的建筑学习生涯，从空间构成练习到大型奥体中心毕业设计，
-                            平衡设计进度、作品质量、压力和金钱，顺利通过每次评图，最终成为建筑大师！
-                        </p>
+                    <div style={{ background: '#F8FAFC', borderRadius: '16px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
+                            <p style={{ marginBottom: '12px', fontSize: '15px' }}><strong>嘿，准建筑师。</strong></p>
+                            <p style={{ marginBottom: '16px' }}>这里没有普利兹克奖的红地毯，只有拉不完的线条和喝不完的红牛。<br />在《建筑生模拟器》中，你将开启一段为期五年的“非人”生活：</p>
+
+                            <div style={{ display: 'inline-block', textAlign: 'left', margin: '0 auto' }}>
+                                <ul style={{ paddingLeft: '20px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <li><strong>博弈导师</strong>：在 7 位性格迥异（且可能都有点心理变态）的导师手下死里逃生。</li>
+                                    <li><strong>经营作品集</strong>：每一张图纸都是你的职业命脉，是入职名企还是转行送外卖？全看这 60 周的选择与造化。</li>
+                                    <li><strong>临场评图</strong>：面对导师的毒舌，你是选择“逻辑轰炸”强行圆场，还是“情感共鸣”卖惨求生？</li>
+                                    <li><strong>终极抉择</strong>：保研、出国、考公、转行…… 建筑学教给你的逻辑，将是你对这个世界进行“降维打击”的唯一武器。</li>
+                                </ul>
+                            </div>
+
+                            <div style={{
+                                marginTop: '16px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)',
+                                borderLeft: '4px solid #EF4444', color: '#B91C1C', fontSize: '13px', fontWeight: 'bold',
+                                textAlign: 'center'
+                            }}>
+                                ⚠️ 警告：本游戏不包含睡眠补给。如果你在工作室看到日出，那是再正常不过的“建筑学浪漫”。
+                            </div>
+                        </div>
                     </div>
 
                     <div style={{
                         background: 'linear-gradient(135deg,#eef2ff,#f5f3ff)',
                         borderRadius: '12px', padding: '14px', marginBottom: '24px',
-                        border: '1px solid #c7d2fe'
+                        border: '1px solid #c7d2fe', textAlign: 'center'
                     }}>
                         <p style={{ fontSize: '13px', color: '#5b21b6', margin: 0, lineHeight: '1.7' }}>
                             🎲 <strong>身份抽取</strong>：你的学校背景与家庭背景将随机抽取，<br />
@@ -175,7 +198,7 @@ export default function InitScreen() {
                     }}>
                         🎲 抽取身份
                     </button>
-                    <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '18px' }}>
+                    <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '18px', textAlign: 'center' }}>
                         v1.0 Final Edition | Made with ❤️ for Architecture Students
                     </p>
                 </>}
@@ -302,14 +325,48 @@ export default function InitScreen() {
                             </p>
                         </div>
 
-                        <button onClick={handleStartGame} className="draw-btn" style={{
-                            width: '100%', padding: '17px',
-                            background: 'linear-gradient(135deg,#667eea,#764ba2)',
-                            color: 'white', border: 'none', borderRadius: '12px',
-                            fontSize: '19px', fontWeight: '700', cursor: 'pointer',
-                        }}>
-                            🎮 开始游戏
-                        </button>
+                        {/* 额外包裹一层用于放置双按钮 */}
+                        <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                            <button
+                                onClick={handleDraw}
+                                disabled={drawCount >= MAX_DRAWS}
+                                style={{
+                                    flex: 1, padding: '17px',
+                                    background: drawCount >= MAX_DRAWS ? '#CBD5E1' : 'linear-gradient(135deg, #10B981, #059669)',
+                                    color: drawCount >= MAX_DRAWS ? '#94A3B8' : 'white',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '18px', fontWeight: '800',
+                                    cursor: drawCount >= MAX_DRAWS ? 'not-allowed' : 'pointer',
+                                    boxShadow: drawCount >= MAX_DRAWS ? 'none' : '0 8px 16px rgba(16, 185, 129, 0.3)',
+                                    transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={e => {
+                                    if (drawCount < MAX_DRAWS) {
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.filter = 'brightness(1.1)';
+                                    }
+                                }}
+                                onMouseLeave={e => {
+                                    if (drawCount < MAX_DRAWS) {
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.filter = 'none';
+                                    }
+                                }}
+                            >
+                                重新抽取 ({MAX_DRAWS - drawCount}/{MAX_DRAWS})
+                            </button>
+
+                            <button onClick={handleStartGame} className="draw-btn" style={{
+                                flex: 2, padding: '17px',
+                                background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                                color: 'white', border: 'none', borderRadius: '12px',
+                                fontSize: '19px', fontWeight: '800', cursor: 'pointer',
+                                boxShadow: '0 8px 16px rgba(102,126,234,0.3)'
+                            }}>
+                                🎮 开始游戏
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

@@ -14,7 +14,16 @@ import EndingScreen from './components/EndingScreen';
 import EventModal from './components/EventModal';
 import JobScreen from './components/JobScreen';
 import DefenseScreen from './components/DefenseScreen';
+import ReviewFlowScreen from './components/ReviewFlowScreen';
 import TutorDrawScreen from './components/TutorDrawScreen';
+import PortfolioScreen from './components/PortfolioScreen';
+import CompetitionScreen from './components/CompetitionScreen';
+import PostgradScreen from './components/PostgradScreen';
+import StudyAbroadScreen from './components/StudyAbroadScreen';
+import InternScreen from './components/InternScreen';
+import CareerScreen from './components/CareerScreen';
+import ExamGradScreen from './components/ExamGradScreen';
+import ExamCivilScreen from './components/ExamCivilScreen';
 import './App.css';
 
 function GameContent() {
@@ -73,11 +82,30 @@ function GameContent() {
           <DefenseScreen />
         </div>
       )}
+      {screen === 'reviewFlow' && (
+        <div className="main-stage">
+          <ReviewFlowScreen />
+        </div>
+      )}
       {screen === 'tutorDraw' && (
         <div className="main-stage">
           <TutorDrawScreen />
         </div>
       )}
+      {screen === 'portfolio' && (
+        <div className="main-stage" style={{ padding: 0 }}>
+          <PortfolioScreen />
+        </div>
+      )}
+
+      {/* 毕业选项分流界面组 */}
+      {screen === 'competitions' && <div className="main-stage"><CompetitionScreen /></div>}
+      {screen === 'postgrad' && <div className="main-stage"><PostgradScreen /></div>}
+      {screen === 'studyAbroad' && <div className="main-stage"><StudyAbroadScreen /></div>}
+      {screen === 'internship' && <div className="main-stage"><InternScreen /></div>}
+      {screen === 'jobSearch' && <div className="main-stage"><CareerScreen /></div>}
+      {screen === 'examGrad' && <div className="main-stage"><ExamGradScreen /></div>}
+      {screen === 'examCivil' && <div className="main-stage"><ExamCivilScreen /></div>}
 
       {/* 事件弹窗 */}
       <EventModal />

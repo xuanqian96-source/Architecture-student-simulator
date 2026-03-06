@@ -118,7 +118,7 @@ export const tutors = [
         missions: [
             {
                 id: 'sun_m1',
-                description: '本学期非生活费花销低于¥1500',
+                description: '本年度非生活费花销低于¥1500',
                 type: 'spendingBelow',
                 threshold: 1500,
             },
@@ -140,7 +140,7 @@ export const tutors = [
         name: '【学术权威】院士',
         icon: '👴',
         bio: '站在金字塔尖的人物，资源遍布全国。他的话不多，但每一句都能直接定生死。在他的工作室，你接触的是国家级课题，面对的是从未有过的降维打击。',
-        isSpecial: true, // 一学期仅一个任务，仅期末结算
+        isSpecial: true, // 一年度仅一个任务，仅期末结算
         missions: [
             {
                 id: 'academician_m1',
@@ -193,21 +193,26 @@ export const tutors = [
 const DEFAULT_WEIGHT = 10;
 const DRAWN_WEIGHT = 2;
 
+const getWeight = (id, weights) => weights[id] ?? DEFAULT_WEIGHT;
+
 /**
  * 根据权重随机抽取导师
  * @param {Object} weights - { tutorId: weight }
  * @returns {Object} 导师对象
  */
 export function drawTutor(weights = {}) {
-    const totalWeight = tutors.reduce((sum, t) => sum + (weights[t.id] || DEFAULT_WEIGHT), 0);
+    const totalWeight = tutors.reduce((sum, t) => sum + Math.max(0, getWeight(t.id, weights)), 0);
     let random = Math.random() * totalWeight;
 
     for (const tutor of tutors) {
-        const weight = weights[tutor.id] || DEFAULT_WEIGHT;
+        const weight = Math.max(0, getWeight(tutor.id, weights));
+        if (weight === 0) continue;
         random -= weight;
         if (random <= 0) return tutor;
     }
 
+    const validTutors = tutors.filter(t => getWeight(t.id, weights) > 0);
+    if (validTutors.length > 0) return validTutors[validTutors.length - 1];
     return tutors[tutors.length - 1]; // fallback
 }
 
@@ -232,7 +237,8 @@ export function drawMission(tutor, excludeMissionId = null) {
  */
 export function updateTutorWeights(weights, drawnTutorId, appearHistory) {
     const newWeights = { ...weights };
-    newWeights[drawnTutorId] = 0.01; // 极大幅度降权，几乎不会被抽到
+    // 权重设为0，确保接下来几年内绝对不会被抽到，直至所有导师出现后重置
+    newWeights[drawnTutorId] = 0;
 
     // 检查是否所有导师都已出现
     const updatedHistory = [...new Set([...appearHistory, drawnTutorId])];
@@ -245,7 +251,7 @@ export function updateTutorWeights(weights, drawnTutorId, appearHistory) {
         });
         return { newWeights, updatedHistory: [drawnTutorId], allAppeared };
     } else {
-        // 每学期其余导师权重逐渐回升（+1.5）直到恢复 DEFAULT_WEIGHT
+        // 每年其余导师权重逐渐回升（+1.5）直到恢复 DEFAULT_WEIGHT
         // 尽量保证未抽到的老师具有最高优先级
         tutors.forEach(t => {
             if (t.id !== drawnTutorId && newWeights[t.id] < DEFAULT_WEIGHT) {
@@ -263,7 +269,7 @@ export function updateTutorWeights(weights, drawnTutorId, appearHistory) {
  * 判定导师任务是否完成
  * @param {Object} mission - 任务对象
  * @param {Object} state - 游戏状态
- * @param {Object} tracking - 追踪数据 (actionCounts, softwareStart, designStart, semesterSpending)
+ * @param {Object} tracking - 追踪数据 (actionCounts, softwareStart, designStart, yearSpending)
  * @returns {boolean}
  */
 export function isMissionComplete(mission, state, tracking) {
@@ -288,7 +294,7 @@ export function isMissionComplete(mission, state, tracking) {
             return state.attributes.stress < mission.threshold;
 
         case 'spendingBelow':
-            return (tracking.semesterSpending || 0) < mission.threshold;
+            return (tracking.yearSpending || 0) < mission.threshold;
 
         case 'compound':
             return mission.conditions.every(cond => {
@@ -329,7 +335,7 @@ export function getMissionProgress(mission, state, tracking) {
         case 'stressBelow':
             return `当前 ${Math.floor(state.attributes.stress)} / 需低于 ${mission.threshold}`;
         case 'spendingBelow':
-            return `已花费 ¥${Math.floor(tracking.semesterSpending || 0)} / 需低于 ¥${mission.threshold}`;
+            return `已花费 ¥${Math.floor(tracking.yearSpending || 0)} / 需低于 ¥${mission.threshold}`;
         case 'compound':
             return mission.conditions.map(cond => {
                 if (cond.target === 'progress')

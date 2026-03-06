@@ -1,4 +1,4 @@
-// 汇报策略选择界面 - 导师任务判定后、评图前
+// 汇报策略选择界面 - 导师任务结算后、评图前（导师结算已拆分至TutorJudgmentScreen）
 
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
@@ -6,7 +6,6 @@ import { defenseStrategies } from '../data/defense';
 
 export default function DefenseScreen() {
     const { state, dispatch, ActionTypes } = useGame();
-    const { tutorMissionResult } = state;
     const [selectedStrategy, setSelectedStrategy] = useState(null);
 
     const checkReqs = (strategy) => {
@@ -25,8 +24,6 @@ export default function DefenseScreen() {
         }, 800);
     };
 
-    // 选择完毕后会自动跳转到 game screen (由 reducer 处理)
-
     return (
         <div style={{
             height: '100%',
@@ -35,63 +32,6 @@ export default function DefenseScreen() {
             flexDirection: 'column',
             overflow: 'hidden'
         }}>
-            {/* 导师任务判定结果 */}
-            {tutorMissionResult && (
-                <div style={{
-                    background: tutorMissionResult.success === null
-                        ? '#F0F9FF'  // 院士期中不结算
-                        : tutorMissionResult.success
-                            ? '#F0FDF4'
-                            : '#FEF2F2',
-                    borderRadius: '14px',
-                    padding: '16px 20px',
-                    marginBottom: '16px',
-                    borderLeft: `4px solid ${tutorMissionResult.success === null ? '#3B82F6'
-                        : tutorMissionResult.success ? '#10B981' : '#EF4444'
-                        }`,
-                    flexShrink: 0,
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '8px',
-                    }}>
-                        <span style={{ fontSize: '18px' }}>
-                            {tutorMissionResult.success === null ? '⏳'
-                                : tutorMissionResult.success ? '✅' : '❌'}
-                        </span>
-                        <span style={{
-                            fontSize: '15px',
-                            fontWeight: '700',
-                            color: '#1E293B',
-                        }}>
-                            {tutorMissionResult.tutorName} · 任务{
-                                tutorMissionResult.success === null ? '待定'
-                                    : tutorMissionResult.success ? '达成' : '未完成'
-                            }
-                        </span>
-                    </div>
-                    <div style={{
-                        fontSize: '13px',
-                        color: '#475569',
-                        lineHeight: '1.6',
-                        fontStyle: 'italic',
-                    }}>
-                        {tutorMissionResult.comment}
-                    </div>
-                    {tutorMissionResult.effectSummary && (
-                        <div style={{
-                            fontSize: '12px',
-                            color: '#64748B',
-                            marginTop: '6px',
-                            fontWeight: '600',
-                        }}>
-                            效果: {tutorMissionResult.effectSummary}
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* 标题 */}
             <div style={{ marginBottom: '16px', flexShrink: 0 }}>

@@ -4,7 +4,8 @@ import React, { createContext, useContext, useReducer } from 'react';
 import { generateIdentity } from '../data/identities.js';
 import { drawProject } from '../data/projects.js';
 import { shopItems } from '../data/shop.js';
-import { checkEnding } from '../data/endings.js';
+import { checkFailureEnding, endings } from '../data/endings.js';
+import { internships } from '../data/employment.js';
 import { addTimestamp } from '../utils/formatters.js';
 import {
     calculateProgressGrowth,
@@ -48,6 +49,8 @@ const initialState = {
         warningCount: 0,
         stressMaxWeeks: 0
     },
+    portfolio: [],       // 作品集档案
+    portfolioScore: 0,   // 作品集总荣誉分数
     ui: {
         screen: 'init', // init, game, review, model, shop, ending, choice, defense
         narrative: '欢迎来到《建筑生模拟器》',
@@ -66,8 +69,15 @@ const initialState = {
     weeklyFlags: {
         modelShown: false,
         reviewShown: false,
-        defenseShown: false    // 汇报策略是否已展示
+        defenseShown: false,   // 汇报策略是否已展示
+        tutorJudgmentShown: false  // 导师任务结算是否已展示
     },
+    currentIntern: null,           // 当前学年实习 { id, name, icon, year }
+    usedEventIds: [],              // 已抽取的事件ID（不重复）
+    // ===== 毕业分流路线相关数据 =====
+    bestIelts: 0,              // 雅思最高分
+    ieltsYearTaken: 0,         // 记录最近一次参加雅思的学年（每年只能报名一次）
+    internHistory: [],         // 实习记录 (存 id)
     // ===== 导师系统 =====
     tutor: null,               // 当前导师对象
     tutorMission: null,        // 当前阶段活跃任务
@@ -105,6 +115,13 @@ export const ActionTypes = {
     CLOSE_EVENT_MODAL: 'CLOSE_EVENT_MODAL',
     CHOOSE_DEFENSE: 'CHOOSE_DEFENSE',
     DRAW_TUTOR: 'DRAW_TUTOR',
+    RECORD_INTERN: 'RECORD_INTERN',
+    UPDATE_IELTS: 'UPDATE_IELTS',
+    TRIGGER_ENDING: 'TRIGGER_ENDING',
+    APPLY_CUSTOM_EFFECTS: 'APPLY_CUSTOM_EFFECTS',
+    PROCEED_TO_DEFENSE: 'PROCEED_TO_DEFENSE',
+    COMPLETE_REVIEW_FLOW: 'COMPLETE_REVIEW_FLOW',
+    TRIGGER_BANKRUPT: 'TRIGGER_BANKRUPT',
 };
 
 // Reducer函数
@@ -142,7 +159,7 @@ function gameReducer(state, action) {
                     actionCounts: {},
                     softwareStart: initAttrs.software,
                     designStart: initAttrs.design,
-                    semesterSpending: 0,
+                    yearSpending: 0, // 原semesterSpending改为yearSpending
                 },
                 tutorMissionResult: null,
                 defenseResult: null,
@@ -159,10 +176,10 @@ function gameReducer(state, action) {
                 ui: {
                     ...state.ui,
                     screen: 'tutorDraw',
-                    narrative: `${identity.narrative.title}\n\n${identity.narrative.description}\n\n本学期课题: ${firstProject.name}\n\n请抽取本学期导师。`,
-                    logs: ['── 第1年 Week 1 ──', '游戏开始!', addTimestamp('新学期开始！请选择本学期导师。')]
+                    narrative: `${identity.narrative.title}\n\n${identity.narrative.description}\n\n本学年课题: ${firstProject.name}\n\n请抽取本年度导师。`,
+                    logs: ['── 第1年 Week 1 ──', '游戏开始!', addTimestamp('新学年开始！请选择本年度导师。')]
                 },
-                progress: { year: 1, week: 1, semester: 1, totalWeeks: 1 }
+                progress: { year: 1, week: 1, totalWeeks: 1 }
             };
         }
 
@@ -257,7 +274,7 @@ function gameReducer(state, action) {
             };
             // 追踪主动消费（用于孙工任务判定）
             if (actionType === 'hotpot') {
-                newTracking.semesterSpending += 600;
+                newTracking.yearSpending += 600;
             }
             newState.tutorMissionTracking = newTracking;
 
@@ -269,11 +286,34 @@ function gameReducer(state, action) {
             return newState;
         }
 
+        case ActionTypes.APPLY_CUSTOM_EFFECTS: {
+            const { effects, narrative, logMessage } = action.payload;
+            let newState = { ...state };
+
+            if (effects) {
+                newState = applyEventEffects(newState, effects);
+            }
+            if (narrative) {
+                newState.ui.narrative = narrative;
+            }
+
+            const finalLog = logMessage || narrative || '进行了特殊行动';
+            newState.ui.logs = [...newState.ui.logs, addTimestamp(finalLog)];
+
+            // 属性边界检查
+            newState.attributes.design = clampAttribute(newState.attributes.design);
+            newState.attributes.software = clampAttribute(newState.attributes.software);
+            newState.attributes.stress = clampStress(newState.attributes.stress);
+            newState.attributes.money = Math.max(0, newState.attributes.money);
+
+            return newState;
+        }
+
         case ActionTypes.NEXT_WEEK: {
             let newState = { ...state };
             const currentWeek = state.progress.week;
             const currentYear = state.progress.year;
-            const weeklyFlags = state.weeklyFlags || { modelShown: false, reviewShown: false, defenseShown: false };
+            const weeklyFlags = state.weeklyFlags || { modelShown: false, reviewShown: false, defenseShown: false, tutorJudgmentShown: false };
 
             // 1. 模型制作周（W5、W11）——只展示一次，不推进周数
             if (shouldTriggerModel(currentWeek) && !weeklyFlags.modelShown) {
@@ -287,14 +327,13 @@ function gameReducer(state, action) {
                 };
             }
 
-            // 2. 评图周（W6、W12）的汇报策略环节——在评图前触发
-            if (shouldTriggerReview(currentWeek) && !weeklyFlags.defenseShown) {
+            // 2. 评图周（W6、W12）——一体化流程（导师结算+汇报策略+评图）
+            if (shouldTriggerReview(currentWeek) && !weeklyFlags.tutorJudgmentShown) {
                 // 判定导师任务
                 let tutorJudgmentResult = null;
                 const isMidterm = isMiddtermWeek(currentWeek);
 
                 if (state.tutor && state.tutorMission) {
-                    // 院士特殊：仅期末结算
                     const shouldJudge = state.tutor.isSpecial ? !isMidterm : true;
 
                     if (shouldJudge) {
@@ -302,7 +341,6 @@ function gameReducer(state, action) {
                         const effects = success ? state.tutor.successReward : state.tutor.failPenalty;
                         const comment = success ? state.tutor.successComment : state.tutor.failComment;
 
-                        // 应用导师奖惩（使用不可变方式）
                         const { newState: afterEffects, logs: effectLogs } = applyTutorEffects(newState, effects);
                         newState = afterEffects;
 
@@ -326,9 +364,8 @@ function gameReducer(state, action) {
                             },
                         };
                     } else {
-                        // 院士期中不结算，给提示
                         tutorJudgmentResult = {
-                            success: null, // 未结算
+                            success: null,
                             comment: '院士的任务将在期末评图时统一结算。',
                             tutorName: state.tutor.name,
                             missionDesc: state.tutorMission.description,
@@ -337,14 +374,31 @@ function gameReducer(state, action) {
                     }
                 }
 
+                // 预计算评图结果（存储在 state 中供 ReviewFlowScreen 使用）
+                const reviewType = isMidterm ? 'midterm' : 'final';
+                const reviewFunc = reviewType === 'midterm' ? conductMidtermReview : conductFinalReview;
+
+                let effectiveQuality = newState.currentProject.quality;
+                if (reviewType === 'final' && state.qualityMultiplier > 1) {
+                    effectiveQuality = Math.floor(effectiveQuality * state.qualityMultiplier);
+                }
+
+                const originalQuality = newState.currentProject.quality;
+                newState.currentProject.quality = effectiveQuality;
+                const preReviewResult = reviewFunc(newState);
+                newState.currentProject.quality = originalQuality;
+                preReviewResult.type = reviewType;
+                preReviewResult.effectiveQuality = effectiveQuality;
+
                 return {
                     ...newState,
-                    weeklyFlags: { ...weeklyFlags, defenseShown: true },
+                    weeklyFlags: { ...weeklyFlags, tutorJudgmentShown: true, defenseShown: true },
                     tutorMissionResult: tutorJudgmentResult,
-                    defenseResult: null, // 清除之前的汇报结果
+                    defenseResult: null,
+                    pendingReviewResult: preReviewResult,  // 预计算的评图结果
                     ui: {
                         ...(newState.ui || state.ui),
-                        screen: 'defense',
+                        screen: 'reviewFlow',  // 一体化评图流程界面
                     }
                 };
             }
@@ -370,7 +424,7 @@ function gameReducer(state, action) {
 
                 // 情感共鸣失败时评价降级
                 if (state.defenseResult && state.defenseResult.effects?.gradeDowngrade && reviewResult.grade) {
-                    const gradeOrder = ['A', 'B', 'C', 'E'];
+                    const gradeOrder = ['S', 'A', 'B', 'C', 'D'];
                     const idx = gradeOrder.indexOf(reviewResult.grade);
                     if (idx >= 0 && idx < gradeOrder.length - 1) {
                         reviewResult.grade = gradeOrder[idx + 1];
@@ -379,14 +433,42 @@ function gameReducer(state, action) {
                 }
 
                 if (reviewResult.consequence === 'warning') {
-                    newState.history.warningCount += 1;
+                    // D级的处理，不再计入警告，只记录（由于D不挂科不警告，这里可以作为历史或者直接跳过不累计warningCount）
+                    // 用户说“不计入挂科”，我们可以移除它的warningCount或者单独保留。
+                    // 之前的逻辑里只有最终导致退学的是 warningCount。为了安全，我们将F定为唯一导致游戏退学（挂科数+1）
                 }
+                if (reviewResult.consequence === 'fail') {
+                    newState.history.warningCount += 1; // 只有F计入挂科/严重警告
+                }
+
                 newState.history.grades.push({
                     year: state.progress.year,
                     week: currentWeek,
                     grade: reviewResult.grade || 'F',
                     type: reviewType
                 });
+
+                // ========== 作品集入库拦截 (仅期末且达到S/A) ==========
+                if (reviewType === 'final' && ['S', 'A'].includes(reviewResult.grade)) {
+                    const increment = effectiveQuality; // 不再对A级作品加权，统一使用实际质量分
+
+                    const savedProject = {
+                        id: 'proj_' + Date.now() + Math.floor(Math.random() * 1000),
+                        projectId: state.currentProject.id,
+                        title: state.currentProject.name,
+                        semester: `大${['一', '二', '三', '四', '五'][state.progress.year - 1]}`, // 改为只显示大几
+                        tutorId: state.tutor?.id || 'unknown',
+                        tutorName: state.tutor?.name || '无名导师',
+                        qualityScore: effectiveQuality,
+                        grade: reviewResult.grade
+                    };
+
+                    newState.portfolio = [...state.portfolio, savedProject];
+                    newState.portfolioScore = (state.portfolioScore || 0) + increment;
+
+                    // 用作下一屏UI弹窗提示的Flag
+                    newState.ui.newPortfolioProject = savedProject;
+                }
 
                 return {
                     ...newState,
@@ -395,21 +477,20 @@ function gameReducer(state, action) {
                         ...state.ui,
                         screen: 'review',
                         reviewResult,
+                        newPortfolioProject: newState.ui.newPortfolioProject,
                         logs: [...(newState.ui?.logs || state.ui.logs), `── Week ${currentWeek} `
                             + (reviewType === 'midterm' ? '(期中评图)' : '(期末评图)') + ` ──`]
                     }
                 };
             }
 
-            // 4. 计算真实的下一周(处理学期末回绕)
+            // 4. 计算真实的下一周(处理学年末回绕)
             let nextWeek = currentWeek + 1;
             let nextYear = currentYear;
-            let nextSemester = state.progress.semester;
 
             if (nextWeek > 12) {
                 nextWeek = 1;
-                nextSemester += 1;
-                if (nextSemester % 2 === 1) nextYear += 1; // 奇数学期 = 新学年
+                nextYear += 1;
             }
 
             // 分隔符：只在实际推进时添加，使用真实的nextWeek
@@ -418,11 +499,11 @@ function gameReducer(state, action) {
                 `── 第${nextYear}年 Week ${nextWeek} ──`
             ];
 
-            // 新学期：抽取新课题 + 重置学期复购商品 + 展示导师抽取界面
-            if (nextWeek === 1 && nextSemester !== state.progress.semester) {
+            // 新学年：抽取新课题 + 重置年度复购商品 + 展示导师抽取界面
+            if (nextWeek === 1 && nextYear !== currentYear) {
                 const newProject = drawProject(nextYear);
 
-                // 学期复购商品重置
+                // 年度复购商品重置 (原学期复购)
                 const semesterRepeatableIds = shopItems.filter(i => i.semesterRepeatable).map(i => i.id);
                 const semInventory = newState.inventory.filter(id => !semesterRepeatableIds.includes(id));
 
@@ -435,19 +516,19 @@ function gameReducer(state, action) {
                     candidates.push(candidate);
                     usedIds.add(candidate.id);
                     // 临时降权避免重复出现在候选列表
-                    tempWeights = { ...tempWeights, [candidate.id]: 0.01 };
+                    tempWeights = { ...tempWeights, [candidate.id]: 0 };
                 }
 
                 // 存储候选信息和新课题，等玩家选择后再正式推进
                 return {
                     ...newState,
                     inventory: semInventory,
+                    currentIntern: null,  // 新学年清空实习状态
                     // 临时存储候选和新课题
                     pendingNewSemester: {
                         candidates,
                         newProject,
                         nextYear,
-                        nextSemester,
                     },
                     ui: {
                         ...state.ui,
@@ -455,7 +536,7 @@ function gameReducer(state, action) {
                         logs: [
                             ...state.ui.logs,
                             `── 第${nextYear}年 Week ${nextWeek} ──`,
-                            addTimestamp('新学期开始！请选择本学期导师。'),
+                            addTimestamp('新学年开始！请选择本年度导师。'),
                         ],
                     }
                 };
@@ -466,6 +547,7 @@ function gameReducer(state, action) {
                 const phase2Mission = drawMission(state.tutor, state.phaseMissionId);
                 newState.tutorMission = phase2Mission;
                 newState.tutorMissionPhase = 2;
+                newState.phaseMissionId = phase2Mission.id;
                 // 重置追踪计数器（但保留花费追踪，因为孙工任务跨整学期）
                 newState.tutorMissionTracking = {
                     ...newState.tutorMissionTracking,
@@ -531,8 +613,8 @@ function gameReducer(state, action) {
             }
 
             // 9. 每周必触发一个事件(随机事件 or 交互抉择)
-            recoverWeights(); // 每周恢复所有事件权重
-            const weeklyEvent = drawWeeklyEvent();
+            recoverWeights();
+            const weeklyEvent = drawWeeklyEvent(state.usedEventIds || []);
 
             if (weeklyEvent.type === 'random') {
                 // 随机事件: 立即应用效果，显示弹窗
@@ -545,14 +627,13 @@ function gameReducer(state, action) {
                 newState.progress = {
                     year: nextYear,
                     week: nextWeek,
-                    semester: nextSemester,
                     totalWeeks: state.progress.totalWeeks + 1
                 };
                 newState.weeklyActions = { count: 0, limit: newState.redbullAPBoost ? 3 : 2 };
                 newState.redbullAPBoost = false;
 
                 // 13. 检查结局
-                const endingR = checkEnding(newState);
+                const endingR = checkFailureEnding(newState);
                 if (endingR) {
                     return {
                         ...newState,
@@ -579,6 +660,7 @@ function gameReducer(state, action) {
 
                 return {
                     ...newState,
+                    usedEventIds: [...(state.usedEventIds || []), evt.id],
                     ui: {
                         ...newState.ui,
                         showEventModal: true,
@@ -600,7 +682,6 @@ function gameReducer(state, action) {
                 newState.progress = {
                     year: nextYear,
                     week: nextWeek,
-                    semester: nextSemester,
                     totalWeeks: state.progress.totalWeeks + 1
                 };
                 newState.weeklyActions = { count: 0, limit: newState.redbullAPBoost ? 3 : 2 };
@@ -608,6 +689,7 @@ function gameReducer(state, action) {
 
                 return {
                     ...newState,
+                    usedEventIds: [...(state.usedEventIds || []), choice.id],
                     ui: {
                         ...state.ui,
                         screen: 'choice',
@@ -623,7 +705,6 @@ function gameReducer(state, action) {
             newState.progress = {
                 year: nextYear,
                 week: nextWeek,
-                semester: nextSemester,
                 totalWeeks: state.progress.totalWeeks + 1
             };
 
@@ -634,16 +715,32 @@ function gameReducer(state, action) {
             };
             newState.redbullAPBoost = false;
 
-            // 13. 检查结局
-            const ending = checkEnding(newState);
-            if (ending) {
+            // 13. 检查失败结局 (破产/劝退/飞人)
+            const failureEnding = checkFailureEnding(newState);
+            if (failureEnding) {
                 return {
                     ...newState,
                     ui: {
                         ...state.ui,
                         screen: 'ending',
-                        ending,
-                        narrative: ending.description,
+                        ending: failureEnding,
+                        narrative: failureEnding.description,
+                        logs
+                    }
+                };
+            }
+
+            // 14. 检查是否达到60周强制毕业（不自动判定好坏，只给平庸毕业）
+            if (newState.progress.totalWeeks > 60) {
+                const { endings } = require('../data/endings.js');
+                const defaultEnding = endings.default_graduate;
+                return {
+                    ...newState,
+                    ui: {
+                        ...state.ui,
+                        screen: 'ending',
+                        ending: defaultEnding,
+                        narrative: defaultEnding.description,
                         logs
                     }
                 };
@@ -676,6 +773,19 @@ function gameReducer(state, action) {
             const effectSummary = formatEffectsForLog(appliedEffects);
             const choiceLog = `  → 选择「${option.text}」${resultText}  ${effectSummary}`;
 
+            const endingR = checkFailureEnding(updatedState);
+            if (endingR) {
+                return {
+                    ...updatedState,
+                    ui: {
+                        ...updatedState.ui,
+                        screen: 'ending',
+                        ending: endingR,
+                        narrative: endingR.description
+                    }
+                };
+            }
+
             return {
                 ...updatedState,
                 ui: {
@@ -700,7 +810,7 @@ function gameReducer(state, action) {
             // 追踪模型花费（非生活费主动消费）
             newState.tutorMissionTracking = {
                 ...state.tutorMissionTracking,
-                semesterSpending: (state.tutorMissionTracking.semesterSpending || 0) + modelOption.cost,
+                yearSpending: (state.tutorMissionTracking.yearSpending || 0) + modelOption.cost,
             };
 
             return {
@@ -738,6 +848,19 @@ ${modelOption.description}
             }
 
             const purchaseLog = addTimestamp(`🛒 购买: ${item.name} -¥${item.price}`);
+
+            const endingR = checkFailureEnding(newState);
+            if (endingR) {
+                return {
+                    ...newState,
+                    ui: {
+                        ...newState.ui,
+                        screen: 'ending',
+                        ending: endingR,
+                        narrative: endingR.description
+                    }
+                };
+            }
 
             return {
                 ...newState,
@@ -854,7 +977,8 @@ ${modelOption.description}
                 ui: {
                     ...state.ui,
                     showEventModal: false,
-                    currentEvent: null
+                    currentEvent: null,
+                    newPortfolioProject: null // 关闭弹窗时同时销毁作品集入库表彰提示
                 }
             };
         }
@@ -872,7 +996,7 @@ ${modelOption.description}
             // 追踪商店花费（非生活费主动消费）
             const updatedTracking = {
                 ...state.tutorMissionTracking,
-                semesterSpending: (state.tutorMissionTracking.semesterSpending || 0) + item.price,
+                yearSpending: (state.tutorMissionTracking.yearSpending || 0) + item.price,
             };
 
             return {
@@ -912,7 +1036,7 @@ ${modelOption.description}
                 if (effects.money < 0) {
                     newTracking = {
                         ...newTracking,
-                        semesterSpending: (newTracking.semesterSpending || 0) + Math.abs(effects.money),
+                        yearSpending: (newTracking.yearSpending || 0) + Math.abs(effects.money),
                     };
                 }
             }
@@ -947,16 +1071,7 @@ ${modelOption.description}
                 defenseResult: defResult,
                 ui: {
                     ...state.ui,
-                    screen: 'game', // 返回 game，下次 NEXT_WEEK 会触发评图
-                    showEventModal: true,
-                    currentEvent: {
-                        type: 'defense_result',
-                        name: `汇报策略: ${strategy.name}`,
-                        description: narrative,
-                        success,
-                        effects
-                    },
-                    narrative: `🏭 汇报策略: ${strategy.name}\n\n${narrative}`,
+                    screen: 'reviewFlow', // 返回评图流程界面而不是主界面
                     logs: [...state.ui.logs, logEntry]
                 }
             };
@@ -987,7 +1102,6 @@ ${modelOption.description}
             const newProgress = pending.isFirstSemester ? state.progress : {
                 year: pending.nextYear,
                 week: 1,
-                semester: pending.nextSemester,
                 totalWeeks: state.progress.totalWeeks
             };
 
@@ -1003,7 +1117,7 @@ ${modelOption.description}
                     actionCounts: {},
                     softwareStart: state.attributes.software,
                     designStart: state.attributes.design,
-                    semesterSpending: 0,
+                    yearSpending: 0,
                 },
                 tutorMissionResult: null,
                 tutorWeights: finalWeights,
@@ -1019,9 +1133,202 @@ ${modelOption.description}
                     ...state.ui,
                     screen: 'game',
                     narrative: pending.isFirstSemester
-                        ? `${state.identity.narrative.title}\n\n${state.identity.narrative.description}\n\n本学期课题: ${pending.newProject.name}\n\n👨‍🏫 本学期导师: ${chosenTutor.name}`
-                        : `新学期开始了。\n\n本学期课题: ${pending.newProject.name}\n\n👨‍🏫 本学期导师: ${chosenTutor.name}`,
+                        ? `${state.identity.narrative.title}\n\n${state.identity.narrative.description}\n\n本学年课题: ${pending.newProject.name}\n\n👨‍🏫 本学年导师: ${chosenTutor.name}`
+                        : `新学年开始了。\n\n本学年课题: ${pending.newProject.name}\n\n👨‍🏫 本学年导师: ${chosenTutor.name}`,
                     logs: newLogsBase,
+                }
+            };
+        }
+
+        case ActionTypes.RECORD_INTERN: {
+            const { internId, stressPenalty, year } = action.payload;
+            const internData = internships.find(i => i.id === internId) || {};
+            const internName = internData.name || internId;
+            return {
+                ...state,
+                internHistory: [...(state.internHistory || []), { id: internId, year: year || state.progress.year }],
+                currentIntern: { id: internId, name: internName, icon: internData.icon, year: state.progress.year },
+                weeklyStressReduction: (state.weeklyStressReduction || 0) - stressPenalty,
+                ui: {
+                    ...state.ui,
+                    logs: [...state.ui.logs, addTimestamp(`💼 开始实习: ${internName}, 本年每周压力+${stressPenalty}`)]
+                }
+            };
+        }
+
+        case ActionTypes.PROCEED_TO_DEFENSE: {
+            // 保留向后兼容（ReviewFlowScreen内部使用）
+            return state;
+        }
+
+        case ActionTypes.COMPLETE_REVIEW_FLOW: {
+            // 一体化评图流程完成：应用评图结果 + 自动推进周数
+            let newState = { ...state };
+            const currentWeek = state.progress.week;
+            const weeklyFlags = state.weeklyFlags || {};
+            const reviewResult = { ...(state.pendingReviewResult || {}) };
+            const reviewType = reviewResult.type || 'midterm';
+            const effectiveQuality = reviewResult.effectiveQuality || state.currentProject.quality;
+
+            // 情感共鸣失败时评价降级
+            if (state.defenseResult && state.defenseResult.effects?.gradeDowngrade && reviewResult.grade) {
+                const gradeOrder = ['S', 'A', 'B', 'C', 'D'];
+                const idx = gradeOrder.indexOf(reviewResult.grade);
+                if (idx >= 0 && idx < gradeOrder.length - 1) {
+                    reviewResult.grade = gradeOrder[idx + 1];
+                    reviewResult.comment = (reviewResult.comment || '') + '\n（因汇报失败，评价被降级）';
+                }
+            }
+
+            if (reviewResult.consequence === 'fail') {
+                newState.history = { ...newState.history, warningCount: (newState.history.warningCount || 0) + 1 };
+            }
+            newState.history = {
+                ...newState.history,
+                grades: [...(newState.history.grades || []), {
+                    year: state.progress.year,
+                    week: currentWeek,
+                    grade: reviewResult.grade || 'F',
+                    type: reviewType
+                }]
+            };
+
+            // 作品集入库（仅期末且达到S/A）
+            let newPortfolioProject = null;
+            if (reviewType === 'final' && ['S', 'A'].includes(reviewResult.grade)) {
+                const savedProject = {
+                    id: 'proj_' + Date.now() + Math.floor(Math.random() * 1000),
+                    projectId: state.currentProject.id,
+                    title: state.currentProject.name,
+                    semester: `大${['一', '二', '三', '四', '五'][state.progress.year - 1]}`,
+                    tutorId: state.tutor?.id || 'unknown',
+                    tutorName: state.tutor?.name || '无名导师',
+                    qualityScore: effectiveQuality,
+                    grade: reviewResult.grade
+                };
+                newState.portfolio = [...(state.portfolio || []), savedProject];
+                newState.portfolioScore = (state.portfolioScore || 0) + effectiveQuality;
+                newPortfolioProject = savedProject;
+            }
+
+            // 自动推进周数
+            let nextWeek = currentWeek + 1;
+            let nextYear = state.progress.year;
+            let screenToNav = 'game';
+            let extraUpdates = {};
+
+            // W7：发布阶段二任务（非院士）
+            if (nextWeek === 7 && state.tutor && !state.tutor.isSpecial) {
+                // drawMission 第二个参数传入当前的 phaseMissionId，确保抽出新的任务
+                const phase2Mission = drawMission(state.tutor, state.phaseMissionId);
+                extraUpdates.tutorMission = phase2Mission;
+                extraUpdates.tutorMissionPhase = 2;
+                extraUpdates.phaseMissionId = phase2Mission.id;
+                // 重置阶段追踪计数器
+                extraUpdates.tutorMissionTracking = {
+                    ...state.tutorMissionTracking,
+                    actionCounts: {},
+                    softwareStart: newState.attributes.software,
+                    designStart: newState.attributes.design,
+                };
+            }
+
+            if (nextWeek > 12) {
+                nextWeek = 1;
+                nextYear += 1;
+
+                // === 新学年结算逻辑 ===
+                const newProject = drawProject(nextYear);
+                const semesterRepeatableIds = shopItems.filter(i => i.semesterRepeatable).map(i => i.id);
+                const semInventory = newState.inventory.filter(id => !semesterRepeatableIds.includes(id));
+
+                const candidates = [];
+                let tempWeights = { ...state.tutorWeights };
+                const usedIds = new Set();
+                for (let i = 0; i < 3; i++) {
+                    const candidate = drawTutor(tempWeights);
+                    candidates.push(candidate);
+                    usedIds.add(candidate.id);
+                    tempWeights = { ...tempWeights, [candidate.id]: 0 };
+                }
+
+                screenToNav = 'tutorDraw';
+                extraUpdates = {
+                    inventory: semInventory,
+                    currentIntern: null, // 清空实习状态
+                    pendingNewSemester: {
+                        candidates,
+                        newProject,
+                        nextYear,
+                    }
+                };
+            }
+
+            newState.progress = {
+                year: nextYear,
+                week: nextWeek,
+                totalWeeks: state.progress.totalWeeks + 1
+            };
+            newState.weeklyFlags = { modelShown: false, reviewShown: false, defenseShown: false, tutorJudgmentShown: false };
+            newState.weeklyActions = { count: 0, limit: newState.redbullAPBoost ? 3 : 2 };
+            newState.redbullAPBoost = false;
+            newState.pendingReviewResult = null;
+            Object.assign(newState, extraUpdates);
+
+            const logs = [...(state.ui.logs || []),
+            `── Week ${currentWeek} ` + (reviewType === 'midterm' ? '(期中评图)' : '(期末评图)') + ` ──`
+            ];
+
+            if (nextWeek === 1) {
+                logs.push(`── 第${nextYear}年 Week ${nextWeek} ──`);
+                logs.push(addTimestamp('新学年开始！请选择本年度导师。'));
+            }
+
+            return {
+                ...newState,
+                ui: {
+                    ...state.ui,
+                    screen: screenToNav,
+                    reviewResult: screenToNav === 'game' ? reviewResult : null,
+                    newPortfolioProject: screenToNav === 'game' ? newPortfolioProject : null,
+                    narrative: `第${nextYear}学年 第${nextWeek}周`,
+                    logs
+                }
+            };
+        }
+
+        case ActionTypes.UPDATE_IELTS: {
+            const { newScore } = action.payload;
+            const updatedScore = Math.max(state.bestIelts || 0, newScore);
+            return {
+                ...state,
+                bestIelts: updatedScore,
+                ieltsYearTaken: state.progress.year  // 记录考试年度由此限制每年仅一次
+            };
+        }
+
+        case ActionTypes.TRIGGER_ENDING: {
+            const { ending } = action.payload;
+            return {
+                ...state,
+                ui: {
+                    ...state.ui,
+                    screen: 'ending',
+                    ending,
+                    narrative: ending.description
+                }
+            };
+        }
+
+        case ActionTypes.TRIGGER_BANKRUPT: {
+            const ending = endings.bankrupt;
+            return {
+                ...state,
+                ui: {
+                    ...state.ui,
+                    screen: 'ending',
+                    ending,
+                    narrative: ending.description
                 }
             };
         }
