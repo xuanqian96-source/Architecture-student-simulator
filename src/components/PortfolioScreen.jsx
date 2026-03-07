@@ -9,8 +9,9 @@ export default function PortfolioScreen() {
 
     // 辅助函数：根据等级返回视觉颜色
     const getGradeColor = (grade) => {
-        if (grade === 'A') return '#F59E0B'; // 卓越金
-        if (grade === 'B') return '#3B82F6'; // 优秀蓝
+        if (grade === 'S') return '#F59E0B'; // 卓越金
+        if (grade === 'A') return '#8B5CF6'; // 优秀紫
+        if (grade === 'B') return '#3B82F6'; // 良好蓝
         return '#64748B'; // 默认灰
     };
 
@@ -333,7 +334,7 @@ export default function PortfolioScreen() {
                     }}>
                         <div style={{ fontSize: '64px', marginBottom: '20px' }}>📐</div>
                         <h3 style={{ margin: '0 0 12px 0', color: '#475569', fontSize: '24px' }}>个人图档库空缺</h3>
-                        <p style={{ margin: 0, fontSize: '15px' }}>仅当期末评图斩获评委卓越(A)或优秀(B)的极致肯定，项目方有资格被永久封存展示。</p>
+                        <p style={{ margin: 0, fontSize: '15px' }}>仅当期末评图斩获评委卓越(S)或优秀(A)的极致肯定，才能被收录进作品集中。</p>
                     </div>
                 ) : (
                     <div style={{

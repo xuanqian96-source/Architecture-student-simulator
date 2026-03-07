@@ -52,9 +52,9 @@ export function getReviewComment(type) {
 // 基础难度计算公式
 export function calculateBaseDifficulty(year, isMidterm) {
     if (isMidterm) {
-        return 50 + (year - 1) * 20;
+        return 40 + (year - 1) * 10;
     } else {
-        return 100 + (year - 1) * 40;
+        return 80 + (year - 1) * 20;
     }
 }
 
@@ -67,11 +67,11 @@ export function calculateThreshold(baseDifficulty, difficultyCoefficient) {
 export function calculateGrade(currentQuality, threshold) {
     if (currentQuality < threshold) {
         return 'D';
-    } else if (currentQuality < threshold * 1.5) {
+    } else if (currentQuality < threshold + 40) {
         return 'C';
-    } else if (currentQuality < threshold * 2.0) {
+    } else if (currentQuality < threshold + 80) {
         return 'B';
-    } else if (currentQuality < threshold * 2.8) {
+    } else if (currentQuality < threshold + 130) {
         return 'A';
     } else {
         return 'S';

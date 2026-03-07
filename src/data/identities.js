@@ -52,6 +52,7 @@ export const families = {
     probability: 0.10,
     initialMoney: 15000,
     designBonus: 60,
+    softwareBonus: 10,
     monthlyAllowance: 5000,
     skill: {
       id: 'masterGuidance',
@@ -65,14 +66,15 @@ export const families = {
     id: 'wealthy',
     name: '富二代',
     probability: 0.20,
-    initialMoney: 60000,
-    designBonus: 0,
+    initialMoney: 30000,
+    designBonus: 35,
+    softwareBonus: 20,
     monthlyAllowance: 15000,
     skill: {
       id: 'moneyPower',
       name: '钞能力代做',
-      description: '花费¥5,000雇佣校外枪手',
-      effect: { progress: 60, moneyCost: 5000 },
+      description: '花费¥5,000雇佣校外枪手，进度增加30%',
+      effect: { progress: 30, moneyCost: 5000 },
       cooldown: 8
     }
   },
@@ -81,7 +83,8 @@ export const families = {
     name: '普通家庭',
     probability: 0.4,
     initialMoney: 4000,
-    designBonus: 0,
+    designBonus: 30,
+    softwareBonus: 35,
     monthlyAllowance: 2500,
     skill: {
       id: 'ordinaryPath',
@@ -96,7 +99,8 @@ export const families = {
     name: '穷困家庭',
     probability: 0.3,
     initialMoney: 800,
-    designBonus: 0,
+    designBonus: 20,
+    softwareBonus: 30,
     monthlyAllowance: 800,
     skill: {
       id: 'underdog',
@@ -218,8 +222,8 @@ export function generateIdentity() {
     family,
     narrative,
     initialAttributes: {
-      design: school.initialDesign + family.designBonus,
-      software: school.initialSoftware,
+      design: school.initialDesign + (family.designBonus || 0),
+      software: school.initialSoftware + (family.softwareBonus || 0),
       stress: school.initialStress,
       money: family.initialMoney
     }

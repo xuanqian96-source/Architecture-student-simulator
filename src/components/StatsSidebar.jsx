@@ -216,7 +216,7 @@ export default function StatsSidebar() {
                     {/* 申请保研 (大四结束，即第4年12周后激活) */}
                     <GraduationOptionButton
                         icon="👑" label="申请保研"
-                        isActive={progress.totalWeeks >= 48}
+                        isActive={true}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'postgrad' } })}
                     />
 
@@ -230,31 +230,19 @@ export default function StatsSidebar() {
                     {/* 参加考研 (大五激活) */}
                     <GraduationOptionButton
                         icon="📚" label="参加考研"
-                        isActive={progress.year >= 5}
+                        isActive={true}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examGrad' } })}
                     />
 
                     {/* 决定考公 (大五激活) */}
                     <GraduationOptionButton
                         icon="🍵" label="考公选调"
-                        isActive={progress.year >= 5}
+                        isActive={true}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examCivil' } })}
                     />
                 </div>
             </div>
 
-            {/* 时间看板 (置于底部) */}
-            <div className="time-card" style={{ marginTop: 'auto' }}>
-                <div className="time-display">
-                    本科第{progress.year}学年
-                </div>
-                <div className="time-label">
-                    Week {progress.week} / 12
-                </div>
-                <div className="time-label" style={{ marginTop: '8px', fontSize: '11px' }}>
-                    总计: {progress.totalWeeks} / 60 周
-                </div>
-            </div>
         </div>
     );
 }

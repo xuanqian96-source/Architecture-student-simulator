@@ -1,5 +1,7 @@
 // 导师数据库 - 7位导师完整定义 + 抽取/判定系统
 
+import { calculateBaseDifficulty, calculateThreshold, calculateGrade } from './reviews';
+
 export const tutors = [
     {
         id: 'wang',
@@ -9,18 +11,18 @@ export const tutors = [
         isSpecial: false,
         missions: [
             {
-                id: 'wang_m1',
-                description: '软件能力需提升15点',
-                type: 'attributeGain',
-                target: 'software',
-                amount: 15,
-            },
-            {
-                id: 'wang_m2',
+                id: 'wang_a',
                 description: '执行3次「方案推敲」',
                 type: 'actionCount',
                 actionId: 'polish',
                 count: 3,
+            },
+            {
+                id: 'wang_b',
+                description: '单学期内，软件能力累计提升15点',
+                type: 'attributeGain',
+                target: 'software',
+                amount: 15,
             },
         ],
         successReward: { progress: 20, quality: 15 },
@@ -36,18 +38,20 @@ export const tutors = [
         isSpecial: false,
         missions: [
             {
-                id: 'chen_m1',
-                description: '设计能力需达到120',
-                type: 'attributeThreshold',
-                target: 'design',
-                threshold: 120,
-            },
-            {
-                id: 'chen_m2',
+                id: 'chen_a',
                 description: '执行3次「学术讲座」',
                 type: 'actionCount',
                 actionId: 'lecture',
                 count: 3,
+            },
+            {
+                id: 'chen_b',
+                description: '单学期内，设计能力与软件能力均提升15点',
+                type: 'compoundGain',
+                targets: [
+                    { target: 'design', amount: 15 },
+                    { target: 'software', amount: 15 }
+                ],
             },
         ],
         // qualityMultiplier: 期末评图时 quality × 1.2 后再评级
@@ -64,16 +68,22 @@ export const tutors = [
         isSpecial: false,
         missions: [
             {
-                id: 'li_m1',
-                description: '进度需达到70%',
-                type: 'progressThreshold',
-                threshold: 70,
+                id: 'li_a',
+                description: '期中评图时设计课进度达到60%且压力低于50',
+                type: 'compound',
+                conditions: [
+                    { target: 'progress', threshold: 60 },
+                    { target: 'stressBelow', threshold: 50 },
+                ],
             },
             {
-                id: 'li_m2',
-                description: '压力需低于40',
-                type: 'stressBelow',
-                threshold: 40,
+                id: 'li_b',
+                description: '期末评图时进度达到100%且压力低于30',
+                type: 'compound',
+                conditions: [
+                    { target: 'progress', threshold: 100 },
+                    { target: 'stressBelow', threshold: 30 },
+                ],
             },
         ],
         successReward: { progress: 30, money: 500 },
@@ -89,18 +99,18 @@ export const tutors = [
         isSpecial: false,
         missions: [
             {
-                id: 'zhang_m1',
-                description: '软件能力需达到130',
-                type: 'attributeThreshold',
-                target: 'software',
-                threshold: 130,
-            },
-            {
-                id: 'zhang_m2',
+                id: 'zhang_a',
                 description: '执行2次「软件教程」',
                 type: 'actionCount',
                 actionId: 'bilibili',
                 count: 2,
+            },
+            {
+                id: 'zhang_b',
+                description: '单学期内，软件能力累计提升15点',
+                type: 'attributeGain',
+                target: 'software',
+                amount: 15,
             },
         ],
         // qualityDoubleCount: 接下来2次质量增长翻倍（当学期有效）
@@ -117,17 +127,18 @@ export const tutors = [
         isSpecial: false,
         missions: [
             {
-                id: 'sun_m1',
-                description: '本年度非生活费花销低于¥1500',
-                type: 'spendingBelow',
-                threshold: 1500,
-            },
-            {
-                id: 'sun_m2',
+                id: 'sun_a',
                 description: '执行2次「天台放空」',
                 type: 'actionCount',
                 actionId: 'rooftop',
                 count: 2,
+            },
+            {
+                id: 'sun_b',
+                description: '期末评图前打工接私活累计不超过2次',
+                type: 'actionGroupLimit',
+                actionIds: ['cad', 'render', 'model'],
+                limit: 2,
             },
         ],
         successReward: { design: 8, money: 1000 },
@@ -144,12 +155,8 @@ export const tutors = [
         missions: [
             {
                 id: 'academician_m1',
-                description: '进度>90% 且 质量>200',
-                type: 'compound',
-                conditions: [
-                    { target: 'progress', threshold: 90 },
-                    { target: 'quality', threshold: 200 },
-                ],
+                description: '期末评图设计课进度达到 100% 且获得 S 级神作表现',
+                type: 'academician_final'
             },
         ],
         // "保研推荐信碎片"仅为叙事文案，实际效果为全属性+10
@@ -166,15 +173,15 @@ export const tutors = [
         isSpecial: false,
         missions: [
             {
-                id: 'zhao_m1',
+                id: 'zhao_a',
                 description: '执行1次「社交大餐」',
                 type: 'actionCount',
                 actionId: 'hotpot',
                 count: 1,
             },
             {
-                id: 'zhao_m2',
-                description: '压力需低于50',
+                id: 'zhao_b',
+                description: '保障到期末评图时压力低于50',
                 type: 'stressBelow',
                 threshold: 50,
             },
@@ -281,8 +288,22 @@ export function isMissionComplete(mission, state, tracking) {
             return (currentVal - startVal) >= mission.amount;
         }
 
+        case 'compoundGain': {
+            return mission.targets.every(t => {
+                const currentVal = state.attributes[t.target];
+                const startKey = t.target === 'software' ? 'softwareStart' : 'designStart';
+                const startVal = tracking[startKey] || 0;
+                return (currentVal - startVal) >= t.amount;
+            });
+        }
+
         case 'actionCount':
             return (tracking.actionCounts[mission.actionId] || 0) >= mission.count;
+
+        case 'actionGroupLimit': {
+            const sum = mission.actionIds.reduce((total, id) => total + (tracking.actionCounts[id] || 0), 0);
+            return sum <= mission.limit;
+        }
 
         case 'attributeThreshold':
             return state.attributes[mission.target] >= mission.threshold;
@@ -302,6 +323,14 @@ export function isMissionComplete(mission, state, tracking) {
                 if (cond.target === 'quality') return (state.currentProject?.quality || 0) >= cond.threshold;
                 return false;
             });
+
+        case 'academician_final': {
+            const progressOk = (state.currentProject?.progress || 0) >= 100;
+            const baseDiff = calculateBaseDifficulty(state.progress.year, false);
+            const threshold = calculateThreshold(baseDiff, state.identity?.school?.difficulty || 1.0);
+            const grade = calculateGrade(state.currentProject?.quality || 0, threshold);
+            return progressOk && grade === 'S';
+        }
 
         default:
             return false;
@@ -324,9 +353,23 @@ export function getMissionProgress(mission, state, tracking) {
             const gained = Math.max(0, Math.floor(currentVal - startVal));
             return `已提升 ${gained} / ${mission.amount} 点`;
         }
+        case 'compoundGain': {
+            return mission.targets.map(t => {
+                const currentVal = state.attributes[t.target];
+                const startKey = t.target === 'software' ? 'softwareStart' : 'designStart';
+                const startVal = tracking[startKey] || 0;
+                const gained = Math.max(0, Math.floor(currentVal - startVal));
+                const label = t.target === 'software' ? '软件' : '设计';
+                return `${label}已升 ${gained}/${t.amount}`;
+            }).join(' · ');
+        }
         case 'actionCount': {
             const count = tracking.actionCounts[mission.actionId] || 0;
             return `已执行 ${count} / ${mission.count} 次`;
+        }
+        case 'actionGroupLimit': {
+            const sum = mission.actionIds.reduce((total, id) => total + (tracking.actionCounts[id] || 0), 0);
+            return `已执行 ${sum} / 最多 ${mission.limit} 次`;
         }
         case 'attributeThreshold':
             return `当前 ${Math.floor(state.attributes[mission.target])} / 目标 ${mission.threshold}`;
@@ -344,6 +387,14 @@ export function getMissionProgress(mission, state, tracking) {
                     return `质量 ${Math.floor(state.currentProject?.quality || 0)}/${cond.threshold}`;
                 return '';
             }).join(' · ');
+
+        case 'academician_final': {
+            const currentProgress = Math.floor(state.currentProject?.progress || 0);
+            const baseDiff = calculateBaseDifficulty(state.progress.year, false);
+            const threshold = calculateThreshold(baseDiff, state.identity?.school?.difficulty || 1.0);
+            const grade = calculateGrade(state.currentProject?.quality || 0, threshold);
+            return `进度 ${currentProgress}% / 100% · 当前评价: ${grade}`;
+        }
         default:
             return '';
     }

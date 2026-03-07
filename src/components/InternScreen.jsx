@@ -30,7 +30,7 @@ export default function InternScreen() {
             </div>
 
             <div style={{ padding: '16px', background: '#FEF2F2', color: '#B91C1C', borderRadius: '12px', marginBottom: '24px', fontWeight: 'bold' }}>
-                ⚠️ 你已完成本学年的实习安排！本学年内每周压力将会固定额外 +{INTERN_WEEKLY_STRESS}。请专注眼前的这根稻草，不可再接取其他实习。下一学年会重置此限制。
+                ⚠️ 你已完成本学年的实习安排！本学年内每周将固定承受增加的压力，并获得对应周薪。请专注眼前的这根稻草，不可再接取其他实习。下一学年会重置此限制。
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', overflowY: 'auto' }}>
@@ -60,15 +60,31 @@ export default function InternScreen() {
                                 {intern.requirements.stressBelow && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>当前压力:</span><span style={{ color: state.attributes.stress <= intern.requirements.stressBelow ? '#10B981' : '#EF4444' }}>&lt; {intern.requirements.stressBelow}</span></div>}
                             </div>
 
-                            {/* 若今年已有实习，或者正在申请此实习，变更按钮为印章/不可用状 */}
                             {hasInternedThisYear ? (
-                                <div style={{
-                                    textAlign: 'center', padding: '12px', borderRadius: '8px',
-                                    border: '2px dashed #EF4444', color: '#EF4444', fontWeight: '900',
-                                    fontSize: '18px', background: '#FEF2F2', letterSpacing: '4px'
-                                }}>
-                                    待下一学年
-                                </div>
+                                (state.currentIntern === intern.id || state.currentIntern?.id === intern.id) ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '8px' }}>
+                                        <div style={{
+                                            transform: 'rotate(-5deg)', color: '#EF4444', border: '3px solid #EF4444',
+                                            borderRadius: '8px', padding: '8px 16px', display: 'inline-block',
+                                            fontSize: '20px', fontWeight: '900', letterSpacing: '1px', background: '#FEF2F2'
+                                        }}>
+                                            已入职·{intern.name}
+                                        </div>
+                                        <div style={{ marginTop: '12px', fontSize: '11px', color: '#991B1B', fontWeight: 'bold', textAlign: 'center' }}>
+                                            本学年实习岗已确定，每周压力+{INTERN_WEEKLY_STRESS}
+                                            {intern.salary !== undefined ? `，每周${intern.salary > 0 ? '薪水+' : '贴位费'}${intern.salary}` : ''}。
+                                            <br />下一学年可重新选择。
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        textAlign: 'center', padding: '12px', borderRadius: '8px',
+                                        border: '2px dashed #EF4444', color: '#EF4444', fontWeight: '900',
+                                        fontSize: '18px', background: '#FEF2F2', letterSpacing: '4px'
+                                    }}>
+                                        待下一学年
+                                    </div>
+                                )
                             ) : (
                                 <button
                                     disabled={!isEligible}

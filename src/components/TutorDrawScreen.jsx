@@ -37,6 +37,19 @@ export default function TutorDrawScreen() {
         return colors[idxMap[tutor.id] ?? 0];
     };
 
+    const getTutorMeta = (tutorId) => {
+        const meta = {
+            zhao: { stars: '★☆☆☆☆', desc: '任务通常与【缓解压力】有关' },
+            sun: { stars: '★★☆☆☆', desc: '任务通常与【省钱和低消耗】有关' },
+            wang: { stars: '★★★☆☆', desc: '任务通常与【爆肝出图/软件】有关' },
+            zhang: { stars: '★★★☆☆', desc: '任务通常与【软件补习】有关' },
+            chen: { stars: '★★★★☆', desc: '任务通常与【讲座/设计熏陶】有关' },
+            li: { stars: '★★★★☆', desc: '任务与【高压紧凑管控】有关' },
+            academician: { stars: '★★★★★', desc: '极致追求：期末大考全满贯' }
+        };
+        return meta[tutorId] || { stars: '★★★☆☆', desc: '未知特征' };
+    };
+
     return (
         <div style={{
             height: '100%',
@@ -183,17 +196,15 @@ export default function TutorDrawScreen() {
                                         }}>
                                             {tutor.name}
                                         </div>
-                                        {tutor.isSpecial && (
-                                            <div style={{
-                                                fontSize: '11px',
-                                                fontWeight: '700',
-                                                color: 'rgba(255,255,255,0.8)',
-                                                marginTop: '4px',
-                                                letterSpacing: '1px',
-                                            }}>
-                                                ⭐ 特殊导师
-                                            </div>
-                                        )}
+                                        <div style={{
+                                            fontSize: '12px',
+                                            fontWeight: '700',
+                                            color: '#FEF3C7',
+                                            marginTop: '6px',
+                                            letterSpacing: '2px',
+                                        }}>
+                                            {tutor.isSpecial ? '⭐ 特殊导师' : `难度: ${getTutorMeta(tutor.id).stars}`}
+                                        </div>
                                     </div>
 
                                     {/* 介绍区域 (使用 flex: 1 撑开高度) */}
@@ -216,17 +227,21 @@ export default function TutorDrawScreen() {
                                         {/* 任务预览与按钮组容器 (marginTop: auto 推向底部) */}
                                         <div style={{ marginTop: 'auto' }}>
                                             <div style={{
-                                                background: '#F8FAFC',
+                                                background: '#FEF2F2',
                                                 borderRadius: '6px',
                                                 padding: '8px 10px',
                                                 fontSize: '11px',
-                                                color: '#475569',
-                                                borderLeft: `3px solid ${colors.border}`,
-                                                marginBottom: '12px',
+                                                color: '#991B1B',
+                                                marginBottom: '8px',
+                                                fontWeight: 'bold',
+                                                display: 'flex',
+                                                alignItems: 'center',
                                             }}>
-                                                <span style={{ fontWeight: '700' }}>任务提示: </span>
-                                                {tutor.missions[0]?.description}
+                                                <span style={{ marginRight: '6px', fontSize: '14px' }}>📌</span>
+                                                特征: {getTutorMeta(tutor.id).desc}
                                             </div>
+
+                                            {/* 盲盒体验：移除了具体的前期任务要求面板 */}
 
                                             {/* 选择按钮 */}
                                             <button

@@ -81,7 +81,10 @@ export default function ActionCenter() {
                         title="提升设计进度"
                     >
                         <span className="button-icon">🎨</span>
-                        <span>通宵画图</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>通宵画图</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>加进度,受软件影响</span>
+                        </div>
                     </button>
 
                     <button
@@ -91,7 +94,10 @@ export default function ActionCenter() {
                         title="提升设计质量"
                     >
                         <span className="button-icon">💎</span>
-                        <span>方案推敲</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>方案推敲</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>加质量,受设计影响</span>
+                        </div>
                     </button>
 
                     <button
@@ -101,7 +107,10 @@ export default function ActionCenter() {
                         title="提升软件能力"
                     >
                         <span className="button-icon">💻</span>
-                        <span>软件教程</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>软件教程</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>稳步提升软件能力</span>
+                        </div>
                     </button>
 
                     <button
@@ -111,7 +120,10 @@ export default function ActionCenter() {
                         title="提升综合设计"
                     >
                         <span className="button-icon">🎓</span>
-                        <span>学术讲座</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>学术讲座</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>稳步提升设计能力</span>
+                        </div>
                     </button>
 
                     <button
@@ -121,7 +133,10 @@ export default function ActionCenter() {
                         title="缓解压力"
                     >
                         <span className="button-icon">🌬️</span>
-                        <span>天台放空</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>天台放空</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>免费小幅缓解压力</span>
+                        </div>
                     </button>
 
                     <button
@@ -131,7 +146,10 @@ export default function ActionCenter() {
                         title="大幅缓解压力"
                     >
                         <span className="button-icon">🍲</span>
-                        <span>社交大餐</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>社交大餐</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>花钱大幅缓解压力</span>
+                        </div>
                     </button>
 
                     <button
@@ -141,7 +159,10 @@ export default function ActionCenter() {
                         title="前往私活市场"
                     >
                         <span className="button-icon">💼</span>
-                        <span>接私活</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>接私活</span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>消耗行动换取金钱</span>
+                        </div>
                     </button>
 
                     <button
@@ -159,9 +180,12 @@ export default function ActionCenter() {
                         } : {}}
                     >
                         <span className="button-icon">⚡</span>
-                        <span style={{ fontSize: skillCooldown > 0 ? '11px' : undefined }}>
-                            {skillButtonLabel}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: skillCooldown > 0 ? '11px' : undefined }}>
+                                {skillButtonLabel}
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal', marginTop: '2px' }}>专属身份技能</span>
+                        </div>
                     </button>
                 </div>
 

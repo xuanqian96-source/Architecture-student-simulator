@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useGame } from '../logic/gameState';
 import { getMissionProgress, isMissionComplete } from '../data/tutors';
+import { calculateBaseDifficulty, calculateThreshold } from '../data/reviews';
 import NarrativeWindow from './NarrativeWindow';
 import ActionCenter from './ActionCenter';
 import SettingsModal from './SettingsModal';
@@ -25,6 +26,37 @@ export default function MainStage() {
             dispatch({ type: 'TOGGLE_TUTORIAL', payload: true });
         }
     }, [state.progress.totalWeeks, state.tutorialShown, dispatch]);
+
+    // ==== 目标状态动态计算 ====
+    const isBeforeMidterm = state.progress.week <= 6;
+    const progressTarget = isBeforeMidterm ? 50 : 100;
+    const currentProgress = Math.min(Math.floor(state.currentProject?.progress || 0), 100);
+    const progressReached = currentProgress >= progressTarget;
+    const progressColor = progressReached ? '#10B981' : '#EF4444';
+    const progressLabel = isBeforeMidterm ? '期中目标' : '期末目标';
+
+    const baseDiff = calculateBaseDifficulty(state.progress.year, isBeforeMidterm);
+    const thresholdD = calculateThreshold(baseDiff, state.identity?.school?.difficulty || 1.0);
+    const currentQuality = Math.floor(state.currentProject?.quality || 0);
+
+    let qualityColor = '#EF4444';
+    let qualityTargetText = '';
+    if (currentQuality < thresholdD) {
+        qualityColor = '#EF4444';
+        qualityTargetText = `合格门槛: ${Math.floor(thresholdD)}`;
+    } else if (currentQuality < thresholdD + 40) {
+        qualityColor = '#64748B';
+        qualityTargetText = `下一级(B)要求: ${Math.floor(thresholdD + 40)}`;
+    } else if (currentQuality < thresholdD + 80) {
+        qualityColor = '#3B82F6';
+        qualityTargetText = `下一级(A)要求: ${Math.floor(thresholdD + 80)}`;
+    } else if (currentQuality < thresholdD + 130) {
+        qualityColor = '#8B5CF6';
+        qualityTargetText = `下一级(S)要求: ${Math.floor(thresholdD + 130)}`;
+    } else {
+        qualityColor = '#F59E0B';
+        qualityTargetText = `已达最高(S)评级要求`;
+    }
 
     return (
         <div className="main-stage">
@@ -65,25 +97,35 @@ export default function MainStage() {
                         </div>
 
                         <div className="attribute-item" style={{ marginTop: '4px' }}>
-                            <div className="attribute-label" style={{ marginBottom: '0px', fontSize: '11px' }}>进度 PROGRESS</div>
-                            <div className="attribute-value" style={{ fontSize: '15px', fontWeight: '700', lineHeight: '1.1' }}>{Math.floor(state.currentProject?.progress || 0)}%</div>
+                            <div className="attribute-label" style={{ marginBottom: '0px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>进度 PROGRESS</span>
+                                <span style={{ color: progressColor, fontWeight: 'bold' }}>[{progressLabel}] {progressTarget}%</span>
+                            </div>
+                            <div className="attribute-value" style={{ fontSize: '15px', fontWeight: '700', lineHeight: '1.1', color: progressColor }}>
+                                {currentProgress}%
+                            </div>
                             <div className="progress-bar-container" style={{ height: '5px', marginTop: '2px' }}>
                                 <div
                                     className="progress-bar"
-                                    style={{ width: `${Math.min(state.currentProject?.progress || 0, 100)}%` }}
+                                    style={{ width: `${currentProgress}%`, backgroundColor: progressColor }}
                                 />
                             </div>
                         </div>
 
                         <div className="attribute-item" style={{ marginTop: '4px' }}>
-                            <div className="attribute-label" style={{ marginBottom: '0px', fontSize: '11px' }}>质量 QUALITY</div>
-                            <div className="attribute-value" style={{ fontSize: '15px', fontWeight: '700', lineHeight: '1.1' }}>{Math.floor(state.currentProject?.quality || 0)}</div>
+                            <div className="attribute-label" style={{ marginBottom: '0px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>质量 QUALITY</span>
+                                <span style={{ color: qualityColor, fontWeight: 'bold' }}>{qualityTargetText}</span>
+                            </div>
+                            <div className="attribute-value" style={{ fontSize: '15px', fontWeight: '700', lineHeight: '1.1', color: qualityColor }}>
+                                {currentQuality}
+                            </div>
                             <div className="progress-bar-container" style={{ height: '5px', marginTop: '2px' }}>
                                 <div
                                     className="progress-bar"
                                     style={{
-                                        width: `${Math.min((state.currentProject?.quality || 0) / 2, 100)}%`,
-                                        backgroundColor: '#10B981'
+                                        width: `${Math.min(currentQuality / 2, 100)}%`,
+                                        backgroundColor: qualityColor
                                     }}
                                 />
                             </div>
@@ -158,7 +200,9 @@ export default function MainStage() {
                                             color: missionComplete ? '#059669' : '#1E293B',
                                             marginBottom: '4px',
                                         }}>
-                                            {missionComplete ? '✅ ' : '📋 '}{mission.description}
+                                            {missionComplete ? '✅ ' : '📋 '}
+                                            {mission.description}
+                                            {tutor.isSpecial && <span style={{ fontSize: '11px', color: '#EF4444', marginLeft: '6px' }}>(期末结算)</span>}
                                         </div>
                                         <div style={{
                                             fontSize: '12px',

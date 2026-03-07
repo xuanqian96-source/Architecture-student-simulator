@@ -5,13 +5,13 @@ export const INTERN_WEEKLY_STRESS = 10;
 
 export const internships = [
     // 建筑类
-    { id: 'intern_local', name: '普通设计院', type: '建筑', icon: '🏗️', requirements: { design: 60 }, description: '在地方院画住宅标准层，学会用天正的第一步。' },
-    { id: 'intern_provincial', name: '省级大院', type: '建筑', icon: '🏛️', requirements: { design: 100, software: 80 }, description: '接触大型公建项目，见识真正的甲级出图标准。' },
-    { id: 'intern_studio', name: '知名私人事务所', type: '建筑', icon: '✨', requirements: { design: 120, ps: 300 }, description: '和主持建筑师推敲一个窗户比例到凌晨三点。' },
-    { id: 'intern_developer', name: '甲方地产', type: '建筑', icon: '🏠', requirements: { software: 100 }, description: '站在审图的那一边，学会用甲方思维看方案。' },
+    { id: 'intern_local', name: '普通设计院', type: '建筑', icon: '🏗️', requirements: { design: 60 }, salary: 100, salaryDesc: '密斯说 Less is more，所以你的实习工资越少就是越多。', description: '在地方院画住宅标准层，学会用天正的第一步。' },
+    { id: 'intern_provincial', name: '省级大院', type: '建筑', icon: '🏛️', requirements: { design: 100, software: 80 }, salary: 200, salaryDesc: '在这里你终于能吃得起食堂了，尽管这微薄的薪资依然不够付房租。', description: '接触大型公建项目，见识真正的甲级出图标准。' },
+    { id: 'intern_studio', name: '知名私人事务所', type: '建筑', icon: '✨', requirements: { design: 120, ps: 300 }, salary: -500, salaryDesc: '每周倒贴500元。这不是打工，这是你花钱购买大师入场券和神圣的空间体验。', description: '和主持建筑师推敲一个窗户比例到凌晨三点。' },
+    { id: 'intern_developer', name: '甲方地产', type: '建筑', icon: '🏠', requirements: { software: 100 }, salary: 600, salaryDesc: '甲方的实习工资，足以让你在画图狗同学面前抬起高贵的头颅。', description: '站在审图的那一边，学会用甲方思维看方案。' },
     // 转行类
-    { id: 'intern_tech', name: '互联网大厂产品助理', type: '转行', icon: '📱', requirements: { software: 100, stressBelow: 60 }, description: '用推敲平面图的逻辑去画 App 原型图。' },
-    { id: 'intern_game', name: '游戏公司场景建模', type: '转行', icon: '🎮', requirements: { software: 130 }, description: '不用考虑消防规范的3D建模，天堂一般的存在。' },
+    { id: 'intern_tech', name: '互联网大厂产品助理', type: '转行', icon: '📱', requirements: { software: 100, stressBelow: 60 }, salary: 800, salaryDesc: '转行即起飞。这份实习薪水，有些设计院的员工转正了都拿不到。', description: '用推敲平面图的逻辑去画 App 原型图。' },
+    { id: 'intern_game', name: '游戏公司场景建模', type: '转行', icon: '🎮', requirements: { software: 130 }, salary: 1000, salaryDesc: '游戏行业的钞能力，用高昂的时薪直接抚慰你曾在建筑学受创的心灵。', description: '不用考虑消防规范的3D建模，天堂一般的存在。' },
 ];
 
 // 最终求职岗位库（大五激活）

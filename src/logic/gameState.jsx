@@ -192,29 +192,31 @@ function gameReducer(state, action) {
 
             switch (actionType) {
                 case 'redbull': // 通宵画图
-                    newState.currentProject.progress += 15;
+                    const progressIncr = Math.floor(5 + (state.attributes.software * 0.1));
+                    newState.currentProject.progress += progressIncr;
                     newState.attributes.stress += 15;
-                    logMessage = addTimestamp('通宵画图: 进度+15, 压力+15');
+                    logMessage = addTimestamp(`通宵画图: 进度+${progressIncr}, 压力+15`);
                     break;
 
                 case 'polish': // 方案推敲
-                    newState.currentProject.quality += 8;
+                    const qualityIncr = Math.floor(4 + (state.attributes.design * 0.12));
+                    newState.currentProject.quality += qualityIncr;
                     newState.attributes.stress += 8;
                     const designGain = applyLearningDecay(state.attributes.design, 0.5);
                     newState.attributes.design += designGain;
-                    logMessage = addTimestamp(`方案推敲: 质量+8, 压力+8, 设计+${designGain.toFixed(1)}`);
+                    logMessage = addTimestamp(`方案推敲: 质量+${qualityIncr}, 压力+8, 设计+${designGain.toFixed(1)}`);
                     break;
 
                 case 'bilibili': // 软件教程
-                    const softwareGain = applyLearningDecay(state.attributes.software, 2);
+                    const softwareGain = state.attributes.software > 120 ? 3 : 5;
                     newState.attributes.software += softwareGain;
-                    logMessage = addTimestamp(`软件教程: 软件+${softwareGain.toFixed(1)}`);
+                    logMessage = addTimestamp(`软件教程: 软件+${softwareGain}`);
                     break;
 
                 case 'lecture': // 学术讲座
-                    const lectureGain = applyLearningDecay(state.attributes.design, 1);
+                    const lectureGain = state.attributes.design > 150 ? 2 : 3;
                     newState.attributes.design += lectureGain;
-                    logMessage = addTimestamp(`学术讲座: 设计+${lectureGain.toFixed(1)}`);
+                    logMessage = addTimestamp(`学术讲座: 设计+${lectureGain}`);
                     break;
 
                 case 'rooftop': // 天台放空
@@ -546,16 +548,14 @@ function gameReducer(state, action) {
 
             // W7：发布阶段二任务（非院士）+ 重置行动追踪
             if (nextWeek === 7 && state.tutor && !state.tutor.isSpecial) {
-                const phase2Mission = drawMission(state.tutor, state.phaseMissionId);
+                const phase2Mission = state.tutor.missions[1];
                 newState.tutorMission = phase2Mission;
                 newState.tutorMissionPhase = 2;
                 newState.phaseMissionId = phase2Mission.id;
-                // 重置追踪计数器（但保留花费追踪，因为孙工任务跨整学期）
+                // 重置追踪计数器，但必须保留半学期初时的softwareStart和designStart用于B阶跨期判定
                 newState.tutorMissionTracking = {
                     ...newState.tutorMissionTracking,
                     actionCounts: {},
-                    softwareStart: newState.attributes.software,
-                    designStart: newState.attributes.design,
                 };
                 newState.defenseResult = null;
                 logs.push(`📋 导师新任务: ${phase2Mission.description}`);
@@ -581,6 +581,19 @@ function gameReducer(state, action) {
             // 4. 生活费扣除
             newState.attributes.money -= WEEKLY_LIVING_COST;
             logs.push(addTimestamp(`生活费-¥${WEEKLY_LIVING_COST}`));
+
+            // 实习工资
+            if (state.currentIntern) {
+                const activeInternInfo = internships.find(i => i.id === state.currentIntern || i.id === state.currentIntern?.id);
+                if (activeInternInfo && activeInternInfo.salary !== undefined) {
+                    newState.attributes.money += activeInternInfo.salary;
+                    if (activeInternInfo.salary > 0) {
+                        logs.push(addTimestamp(`【${activeInternInfo.name}】实习周薪 +¥${activeInternInfo.salary}`));
+                    } else if (activeInternInfo.salary < 0) {
+                        logs.push(addTimestamp(`缴纳【${activeInternInfo.name}】实习位费 -¥${Math.abs(activeInternInfo.salary)}`));
+                    }
+                }
+            }
 
             // 5. 每月生活费(每4周)
             if (currentWeek % 4 === 0) {
@@ -953,11 +966,16 @@ ${modelOption.description}
         }
 
         case ActionTypes.CHANGE_SCREEN: {
+            let targetScreen = action.payload.screen;
+            // 路由拦截：处于抽取导师等待状态下，任何试图切回主界面(game)的操作都会被强制导向 tutorDraw
+            if (targetScreen === 'game' && state.pendingNewSemester) {
+                targetScreen = 'tutorDraw';
+            }
             return {
                 ...state,
                 ui: {
                     ...state.ui,
-                    screen: action.payload.screen
+                    screen: targetScreen
                 }
             };
         }
@@ -1089,7 +1107,7 @@ ${modelOption.description}
             const chosenTutor = pending.candidates.find(c => c.id === tutorId);
             if (!chosenTutor) return state;
 
-            const chosenMission = drawMission(chosenTutor);
+            const chosenMission = chosenTutor.missions[0];
             const { newWeights: finalWeights, updatedHistory: finalHistory } = updateTutorWeights(
                 state.tutorWeights, chosenTutor.id, state.tutorAppearHistory
             );
@@ -1221,17 +1239,19 @@ ${modelOption.description}
 
             // W7：发布阶段二任务（非院士）
             if (nextWeek === 7 && state.tutor && !state.tutor.isSpecial) {
-                // drawMission 第二个参数传入当前的 phaseMissionId，确保抽出新的任务
-                const phase2Mission = drawMission(state.tutor, state.phaseMissionId);
+                const phase2Mission = state.tutor.missions[1];
                 extraUpdates.tutorMission = phase2Mission;
                 extraUpdates.tutorMissionPhase = 2;
                 extraUpdates.phaseMissionId = phase2Mission.id;
-                // 重置阶段追踪计数器
+                // 重置阶段追踪计数器（保留起初状态记录用于B阶跨期对比）
                 extraUpdates.tutorMissionTracking = {
                     ...state.tutorMissionTracking,
                     actionCounts: {},
-                    softwareStart: newState.attributes.software,
-                    designStart: newState.attributes.design,
+                };
+                extraUpdates.defenseResult = null;
+                extraUpdates.ui = {
+                    ...state.ui,
+                    logs: [...(extraUpdates.ui?.logs || state.ui.logs), `📋 导师新阶段任务: ${phase2Mission.description}`]
                 };
             }
 

@@ -188,56 +188,60 @@ export default function PostgradScreen() {
             </div>
 
             {/* 院校选择列表 */}
-            {!isEligible ? (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FEE2E2', borderRadius: '16px', color: '#B91C1C', fontWeight: 'bold' }}>
-                    暂不满足保研推免资格条件，无法提交申请。
-                </div>
-            ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', flex: 1, minHeight: 0 }}>
-                    {postgradTiers.map(tier => {
-                        const canApplyThis = currentPS >= tier.psRequirement && currentDesign >= tier.designRequirement;
-                        return (
-                            <div
-                                key={tier.id}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', flex: 1, minHeight: 0 }}>
+                {postgradTiers.map(tier => {
+                    const canApplyThis = isEligible && currentPS >= tier.psRequirement && currentDesign >= tier.designRequirement;
+                    return (
+                        <div
+                            key={tier.id}
+                            style={{
+                                background: 'white', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.05)', opacity: canApplyThis ? 1 : 0.6,
+                                border: `2px solid ${canApplyThis ? '#E2E8F0' : '#F1F5F9'}`,
+                                position: 'relative'
+                            }}
+                        >
+                            {!isEligible && (
+                                <div style={{
+                                    position: 'absolute', top: '-10px', right: '-10px', background: '#EF4444', color: 'white',
+                                    fontSize: '12px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '10px',
+                                    boxShadow: '0 2px 4px rgba(EF,68,68,0.3)', zIndex: 10
+                                }}>
+                                    锁定
+                                </div>
+                            )}
+                            <div style={{ fontSize: '48px', marginBottom: '16px', textAlign: 'center' }}>{tier.icon}</div>
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: '#1E293B', textAlign: 'center' }}>{tier.name}</h3>
+                            <div style={{ textAlign: 'center', color: '#64748B', fontSize: '14px', fontWeight: 'bold', marginBottom: '16px' }}>
+                                Tier {tier.tier}
+                            </div>
+                            <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', flex: 1 }}>{tier.description}</p>
+
+                            <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '8px', marginTop: '16px', marginBottom: '24px' }}>
+                                <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>要求作品集:</span>
+                                    <span style={{ color: currentPS >= tier.psRequirement ? '#10B981' : '#EF4444', fontWeight: 'bold' }}>{tier.psRequirement}</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>复试及格线:</span>
+                                    <span style={{ fontWeight: 'bold', color: '#334155' }}>{tier.passScore} 分</span>
+                                </div>
+                            </div>
+
+                            <button
+                                disabled={!canApplyThis}
+                                onClick={() => setConfirmTier(tier)}
                                 style={{
-                                    background: 'white', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column',
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)', opacity: canApplyThis ? 1 : 0.6,
-                                    border: `2px solid ${canApplyThis ? '#E2E8F0' : '#F1F5F9'}`
+                                    background: canApplyThis ? '#3B82F6' : '#CBD5E1', color: 'white', border: 'none', padding: '12px',
+                                    borderRadius: '8px', fontWeight: 'bold', cursor: canApplyThis ? 'pointer' : 'not-allowed', width: '100%'
                                 }}
                             >
-                                <div style={{ fontSize: '48px', marginBottom: '16px', textAlign: 'center' }}>{tier.icon}</div>
-                                <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: '#1E293B', textAlign: 'center' }}>{tier.name}</h3>
-                                <div style={{ textAlign: 'center', color: '#64748B', fontSize: '14px', fontWeight: 'bold', marginBottom: '16px' }}>
-                                    Tier {tier.tier}
-                                </div>
-                                <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', flex: 1 }}>{tier.description}</p>
-
-                                <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '8px', marginTop: '16px', marginBottom: '24px' }}>
-                                    <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>要求作品集:</span>
-                                        <span style={{ color: currentPS >= tier.psRequirement ? '#10B981' : '#EF4444', fontWeight: 'bold' }}>{tier.psRequirement}</span>
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>复试及格线:</span>
-                                        <span style={{ fontWeight: 'bold', color: '#334155' }}>{tier.passScore} 分</span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    disabled={!canApplyThis}
-                                    onClick={() => setConfirmTier(tier)}
-                                    style={{
-                                        background: canApplyThis ? '#3B82F6' : '#CBD5E1', color: 'white', border: 'none', padding: '12px',
-                                        borderRadius: '8px', fontWeight: 'bold', cursor: canApplyThis ? 'pointer' : 'not-allowed', width: '100%'
-                                    }}
-                                >
-                                    {canApplyThis ? '提交申请参营' : '门槛未达标'}
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                                {!isEligible ? '大五申请开放' : canApplyThis ? '提交申请参营' : '门槛未达标'}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
 
             {/* 自定义确认弹窗 */}
             {confirmTier && (

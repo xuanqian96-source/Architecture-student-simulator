@@ -79,18 +79,16 @@ export default function CareerScreen() {
                     寻找实习机会 {state.progress.year >= 5 && '(秋招期关闭)'}
                 </button>
                 <button
-                    disabled={state.progress.year < 5}
                     onClick={() => setPath('architecture')}
-                    style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', fontSize: '16px', fontWeight: 'bold', cursor: state.progress.year < 5 ? 'not-allowed' : 'pointer', background: path === 'architecture' ? '#3B82F6' : '#E2E8F0', color: path === 'architecture' ? 'white' : '#64748B', transition: 'all 0.2s', opacity: state.progress.year < 5 ? 0.5 : 1 }}
+                    style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', background: path === 'architecture' ? '#3B82F6' : '#E2E8F0', color: path === 'architecture' ? 'white' : '#64748B', transition: 'all 0.2s' }}
                 >
-                    坚守建筑本行 {state.progress.year < 5 && '(大五开启)'}
+                    坚守建筑本行
                 </button>
                 <button
-                    disabled={state.progress.year < 5}
                     onClick={() => setPath('pivot')}
-                    style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', fontSize: '16px', fontWeight: 'bold', cursor: state.progress.year < 5 ? 'not-allowed' : 'pointer', background: path === 'pivot' ? '#8B5CF6' : '#E2E8F0', color: path === 'pivot' ? 'white' : '#64748B', transition: 'all 0.2s', opacity: state.progress.year < 5 ? 0.5 : 1 }}
+                    style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', background: path === 'pivot' ? '#8B5CF6' : '#E2E8F0', color: path === 'pivot' ? 'white' : '#64748B', transition: 'all 0.2s' }}
                 >
-                    毅然转行跑路 {state.progress.year < 5 && '(大五开启)'}
+                    毅然转行跑路
                 </button>
                 <button
                     onClick={() => setShowResume(true)}
@@ -144,7 +142,11 @@ export default function CareerScreen() {
 
                             <div style={{ fontSize: '48px', marginBottom: '16px' }}>{intern.icon}</div>
                             <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: '#1E293B' }}>{intern.name}</h3>
-                            <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', flex: 1, minHeight: '60px' }}>{intern.description}</p>
+                            <div style={{ fontSize: '14px', color: intern.salary < 0 ? '#EF4444' : '#10B981', fontWeight: '900', marginBottom: '8px' }}>
+                                周薪：¥{intern.salary}
+                            </div>
+                            <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', flex: 1, minHeight: '40px' }}>{intern.description}</p>
+                            <div style={{ fontSize: '12px', color: '#94A3B8', fontStyle: 'italic', marginBottom: '12px', minHeight: '36px' }}>"{intern.salaryDesc}"</div>
 
                             <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '8px', marginTop: '16px', marginBottom: '24px' }}>
                                 <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '4px', fontWeight: 'bold' }}>录用门槛：</div>
@@ -168,14 +170,25 @@ export default function CareerScreen() {
                         </div>
                     );
                 }) : jobs.map(job => {
-                    const isEligible = canApplyJob(job, state);
+                    // 全职大五才允许投递
+                    const canApplyThis = state.progress.year >= 5 && canApplyJob(job, state);
+                    const isYearFive = state.progress.year >= 5;
 
                     return (
                         <div key={job.id} style={{
                             background: 'white', borderRadius: '16px', padding: '24px', position: 'relative',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: `2px solid ${isEligible ? '#60A5FA' : '#E2E8F0'}`,
-                            opacity: isEligible ? 1 : 0.6, display: 'flex', flexDirection: 'column'
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: `2px solid ${canApplyThis ? '#60A5FA' : '#E2E8F0'}`,
+                            opacity: canApplyThis ? 1 : 0.6, display: 'flex', flexDirection: 'column'
                         }}>
+                            {!isYearFive && (
+                                <div style={{
+                                    position: 'absolute', top: '-10px', left: '-10px', background: '#EF4444', color: 'white',
+                                    fontSize: '12px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '10px',
+                                    boxShadow: '0 2px 4px rgba(239,68,68,0.3)', zIndex: 10
+                                }}>
+                                    秋招锁定
+                                </div>
+                            )}
                             <div style={{ position: 'absolute', top: '16px', right: '16px', background: '#F1F5F9', color: '#64748B', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
                                 Tier {job.tier}
                             </div>
@@ -202,14 +215,14 @@ export default function CareerScreen() {
                             </div>
 
                             <button
-                                disabled={!isEligible}
+                                disabled={!canApplyThis}
                                 onClick={() => setSelectedJob(job)}
                                 style={{
-                                    background: isEligible ? '#1E293B' : '#CBD5E1', color: 'white', border: 'none', padding: '14px', borderRadius: '12px',
-                                    fontWeight: 'bold', cursor: isEligible ? 'pointer' : 'not-allowed', width: '100%', fontSize: '16px', marginTop: '16px'
+                                    background: canApplyThis ? '#1E293B' : '#CBD5E1', color: 'white', border: 'none', padding: '14px', borderRadius: '12px',
+                                    fontWeight: 'bold', cursor: canApplyThis ? 'pointer' : 'not-allowed', width: '100%', fontSize: '16px', marginTop: '16px'
                                 }}
                             >
-                                {isEligible ? '投递并入职 (结算结局)' : '未达录取门槛'}
+                                {!isYearFive ? '大五秋招开启' : canApplyThis ? '投递并入职 (结算结局)' : '未达录取门槛'}
                             </button>
                         </div>
                     );

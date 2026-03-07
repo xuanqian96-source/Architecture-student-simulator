@@ -80,18 +80,8 @@ export default function ExamGradScreen() {
         });
     };
 
-    if (!canApply) {
-        return (
-            <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h1 style={{ fontSize: '28px', color: '#1E293B', margin: '0' }}>📚 研究生招生考试 (初试)</h1>
-                    <button onClick={handleClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✖</button>
-                </div>
-                <div style={{ padding: '16px', background: '#FFFBEB', color: '#D97706', borderRadius: '12px', textAlign: 'center', fontWeight: 'bold' }}>
-                    ⚠️ 暂未开放：研究生统一招生考试将在大五（第5学年）开启报名。
-                </div>
-            </div>
-        );
+    if (!canApply && phase === 'select') {
+        // 去除原本的全屏拦截，在后续渲染中利用 canApply 局部置灰
     }
 
     if (phase === 'exam') {
@@ -184,9 +174,19 @@ export default function ExamGradScreen() {
                         key={tier.id}
                         style={{
                             background: 'white', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '2px solid #E2E8F0'
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: `2px solid ${canApply ? '#E2E8F0' : '#F1F5F9'}`,
+                            opacity: canApply ? 1 : 0.6, position: 'relative'
                         }}
                     >
+                        {!canApply && (
+                            <div style={{
+                                position: 'absolute', top: '-10px', right: '-10px', background: '#EF4444', color: 'white',
+                                fontSize: '12px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '10px',
+                                boxShadow: '0 2px 4px rgba(239,68,68,0.3)', zIndex: 10
+                            }}>
+                                锁定
+                            </div>
+                        )}
                         <div style={{ fontSize: '48px', marginBottom: '16px', textAlign: 'center' }}>{tier.icon}</div>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: '#1E293B', textAlign: 'center' }}>{tier.name}</h3>
                         <div style={{ textAlign: 'center', color: '#64748B', fontSize: '14px', fontWeight: 'bold', marginBottom: '16px' }}>
@@ -200,13 +200,14 @@ export default function ExamGradScreen() {
                         </div>
 
                         <button
+                            disabled={!canApply}
                             onClick={() => setConfirmTier(tier)}
                             style={{
-                                background: '#3B82F6', color: 'white', border: 'none', padding: '14px', borderRadius: '12px',
-                                fontWeight: 'bold', cursor: 'pointer', width: '100%', fontSize: '16px'
+                                background: canApply ? '#3B82F6' : '#CBD5E1', color: 'white', border: 'none', padding: '14px', borderRadius: '12px',
+                                fontWeight: 'bold', cursor: canApply ? 'pointer' : 'not-allowed', width: '100%', fontSize: '16px'
                             }}
                         >
-                            报考并开始初试 (60秒)
+                            {!canApply ? '大五招考开放' : '报考并开始初试 (60秒)'}
                         </button>
                     </div>
                 ))}

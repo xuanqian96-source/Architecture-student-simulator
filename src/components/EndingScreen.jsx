@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useGame } from '../logic/gameState';
-import { saveEndingRecord } from '../data/endingData';
+import { saveEndingRecord } from '../data/endings';
 
 export default function EndingScreen() {
     const { state, dispatch } = useGame();
@@ -112,17 +112,7 @@ export default function EndingScreen() {
                     }}>
                         ✨ 重新开始新人生
                     </button>
-                    {/* 这个选项由于破坏性较强作为底层兜底保留 */}
-                    <button className="restart-button" onClick={handleHardRestart} style={{
-                        background: 'transparent',
-                        border: '2px solid rgba(255,255,255,0.2)',
-                        boxShadow: 'none',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontSize: '15px',
-                        padding: '12px'
-                    }}>
-                        强制刷新浏览器
-                    </button>
+
                 </div>
             </div>
         </div>

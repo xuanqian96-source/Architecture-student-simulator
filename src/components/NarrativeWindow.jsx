@@ -57,9 +57,34 @@ export default function NarrativeWindow() {
 
     return (
         <div className="narrative-window">
-            {/* 固定标题栏 */}
-            <div className="log-header">
-                📋 行动日志
+            {/* 固定标题栏，新增右侧时间进度显示区 */}
+            <div className="log-header" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid #E2E8F0',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '20px' }}>📋</span>
+                    <span>行动日志</span>
+                </div>
+                {/* 融合的时间卡片 */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '13px',
+                    background: '#F8FAFC',
+                    padding: '6px 16px',
+                    borderRadius: '20px',
+                    border: '1px solid #E2E8F0'
+                }}>
+                    <span style={{ fontWeight: '800', color: '#1E293B' }}>本科第{state.progress.year}学年</span>
+                    <span style={{ width: '1px', height: '14px', background: '#CBD5E1' }}></span>
+                    <span style={{ fontWeight: '600', color: '#3B82F6' }}>Week {state.progress.week} / 12</span>
+                    <span style={{ width: '1px', height: '14px', background: '#CBD5E1' }}></span>
+                    <span style={{ fontWeight: '600', color: '#64748B' }}>总第 {state.progress.totalWeeks} / 60 周</span>
+                </div>
             </div>
 
             {/* 只有这个区域滚动 */}
