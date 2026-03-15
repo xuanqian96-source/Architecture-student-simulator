@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useGame } from '../logic/gameState';
 import { getMissionProgress, isMissionComplete } from '../data/tutors';
 import { calculateBaseDifficulty, calculateThreshold } from '../data/reviews';
+import { getQualityCap } from '../logic/calculator';
 import NarrativeWindow from './NarrativeWindow';
 import ActionCenter from './ActionCenter';
 import SettingsModal from './SettingsModal';
@@ -39,9 +40,14 @@ export default function MainStage() {
     const thresholdD = calculateThreshold(baseDiff, state.identity?.school?.difficulty || 1.0);
     const currentQuality = Math.floor(state.currentProject?.quality || 0);
 
+    const qualityCap = getQualityCap(state.progress.year);
+
     let qualityColor = '#EF4444';
     let qualityTargetText = '';
-    if (currentQuality < thresholdD) {
+    if (currentQuality >= qualityCap) {
+        qualityColor = '#F59E0B';
+        qualityTargetText = `✅ 已达质量上限 (${qualityCap})`;
+    } else if (currentQuality < thresholdD) {
         qualityColor = '#EF4444';
         qualityTargetText = `合格门槛: ${Math.floor(thresholdD)}`;
     } else if (currentQuality < thresholdD + 40) {
@@ -71,12 +77,13 @@ export default function MainStage() {
                 <div className="project-tutor-panel" style={{ position: 'relative' }}>
                     {/* 右上角绝对定位的设置小齿轮 */}
                     <button
+                        id="settings-gear-btn"
                         onClick={() => setShowSettings(true)}
                         style={{
                             position: 'absolute', top: '12px', right: '12px',
                             background: 'transparent', border: 'none', cursor: 'pointer',
-                            fontSize: '18px', opacity: 0.6, transition: 'all 0.2s',
-                            padding: '4px', zIndex: 10
+                            fontSize: '22px', opacity: 0.6, transition: 'all 0.2s',
+                            padding: '6px', zIndex: 10
                         }}
                         onMouseOver={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.transform = 'rotate(30deg)' }}
                         onMouseOut={e => { e.currentTarget.style.opacity = 0.6; e.currentTarget.style.transform = 'rotate(0)' }}
@@ -124,7 +131,7 @@ export default function MainStage() {
                                 <div
                                     className="progress-bar"
                                     style={{
-                                        width: `${Math.min(currentQuality / 2, 100)}%`,
+                                        width: `${Math.min((currentQuality / qualityCap) * 100, 100)}%`,
                                         backgroundColor: qualityColor
                                     }}
                                 />

@@ -173,7 +173,7 @@ export default function SkillModal({ onClose }) {
     const skill = identity?.family?.skill;
     const isMiddle = identity?.family?.id === 'middle';
     const hasMoneyCost = skill?.effect?.moneyCost > 0;
-    const canAfford = !hasMoneyCost || state.attributes.money >= skill.effect.moneyCost;
+    const canAfford = !hasMoneyCost || state.attributes.money > skill.effect.moneyCost;
 
     const [phase, setPhase] = useState('confirm'); // 'confirm' | 'animating' | 'done'
 

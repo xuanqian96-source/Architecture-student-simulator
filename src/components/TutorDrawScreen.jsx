@@ -33,13 +33,13 @@ export default function TutorDrawScreen() {
             { bg: 'linear-gradient(135deg, #059669, #10B981)', text: '#fff', border: '#059669' },
             { bg: 'linear-gradient(135deg, #D97706, #F59E0B)', text: '#fff', border: '#D97706' },
         ];
-        const idxMap = { wang: 0, chen: 1, li: 2, zhang: 0, sun: 2, zhao: 1 };
+        const idxMap = { wang: 0, chen: 1, li: 2, zhang: 0, sun: 2, ai: 1 };
         return colors[idxMap[tutor.id] ?? 0];
     };
 
     const getTutorMeta = (tutorId) => {
         const meta = {
-            zhao: { stars: '★☆☆☆☆', desc: '任务通常与【缓解压力】有关' },
+            ai: { stars: '★☆☆☆☆', desc: '任务通常与【缓解压力】有关' },
             sun: { stars: '★★☆☆☆', desc: '任务通常与【省钱和低消耗】有关' },
             wang: { stars: '★★★☆☆', desc: '任务通常与【爆肝出图/软件】有关' },
             zhang: { stars: '★★★☆☆', desc: '任务通常与【软件补习】有关' },

@@ -24,7 +24,16 @@ export default function PostgradScreen() {
 
     const startInterview = (tier) => {
         setSelectedTier(tier);
-        setQuestions(drawInterviewQuestions());
+        // 抽题并随机打乱每道题的选项顺序
+        const drawnQuestions = drawInterviewQuestions().map(q => {
+            const shuffled = [...q.options];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return { ...q, options: shuffled };
+        });
+        setQuestions(drawnQuestions);
         setCurrentQIndex(0);
         setScore(0);
         setPhase('interview');
@@ -72,8 +81,8 @@ export default function PostgradScreen() {
     if (phase === 'interview') {
         const q = questions[currentQIndex];
         return (
-            <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC' }}>
-                <div style={{ maxWidth: '700px', margin: '0 auto', background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div style={{ background: 'white', padding: '40px', borderRadius: '24px', width: '90%', maxWidth: '700px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B', fontWeight: 'bold', marginBottom: '24px' }}>
                         <span>🎓 {selectedTier.name} 复试现场</span>
                         <span>题目 {currentQIndex + 1} / 5</span>
@@ -173,9 +182,9 @@ export default function PostgradScreen() {
                         </div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '4px' }}>设计能力 ({'>'}140)</div>
-                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentDesign >= 140 ? '#10B981' : '#EF4444' }}>
-                            {Math.floor(currentDesign)} {currentDesign >= 140 ? '✅' : '❌'}
+                        <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '4px' }}>设计能力 ({'>'}180)</div>
+                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentDesign >= 180 ? '#10B981' : '#EF4444' }}>
+                            {Math.floor(currentDesign)} {currentDesign >= 180 ? '✅' : '❌'}
                         </div>
                     </div>
                     <div style={{ textAlign: 'center' }}>

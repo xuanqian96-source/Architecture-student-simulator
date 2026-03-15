@@ -22,7 +22,7 @@ export default function ExamCivilScreen() {
         setQuestions(drawCivilQuestions()); // 10题
         setCurrentQIndex(0);
         setCorrectCount(0);
-        setTimeLeft(60);
+        setTimeLeft(90);
         setPhase('exam');
     };
 
@@ -194,7 +194,7 @@ export default function ExamCivilScreen() {
                                 fontWeight: 'bold', cursor: canApply ? 'pointer' : 'not-allowed', width: '100%', fontSize: '16px'
                             }}
                         >
-                            {!canApply ? '大五开启报名' : '报考并开始笔试 (60秒)'}
+                            {!canApply ? '大五开启报名' : '报考并开始笔试 (90秒)'}
                         </button>
                     </div>
                 ))}

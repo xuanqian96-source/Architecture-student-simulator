@@ -54,8 +54,7 @@ export const tutors = [
                 ],
             },
         ],
-        // qualityMultiplier: 期末评图时 quality × 1.2 后再评级
-        successReward: { design: 5, qualityMultiplier: 1.2 },
+        successReward: { design: 10, quality: 20 },
         failPenalty: { stress: 25 },
         successComment: '"我听到了空间的叙事。这种对边界的模糊处理，确实有一点\'诗意\'的影子。"',
         failComment: '"平庸，太死板了。你只是在堆砖头，你根本没有触及建筑的灵魂。"',
@@ -86,8 +85,8 @@ export const tutors = [
                 ],
             },
         ],
-        successReward: { progress: 30, money: 500 },
-        failPenalty: { warning: 1, stress: 35 },
+        successReward: { progress: 20, quality: 10, money: 500 },
+        failPenalty: { stress: 35 },
         successComment: '"准时，且完整。这种职业素养是你未来在行业生存唯一的本钱。继续保持。"',
         failComment: '"你是把设计课当成业余爱好吗？这种进度，期末直接准备重修吧。"',
     },
@@ -113,8 +112,7 @@ export const tutors = [
                 amount: 15,
             },
         ],
-        // qualityDoubleCount: 接下来2次质量增长翻倍（当学期有效）
-        successReward: { qualityDoubleCount: 2, software: 5 },
+        successReward: { software: 10, quality: 15 },
         failPenalty: { stress: 15 },
         successComment: '"图面表现力极佳！这几张透视图展现了某种神性。你的审美终于在线了。"',
         failComment: '"这种配景人就像是从上世纪穿越过来的。图面脏乱，我完全没兴趣看你的方案。"',
@@ -166,32 +164,31 @@ export const tutors = [
         failComment: '"失望。你在浪费我的资源，也在浪费你自己的天赋。你的心根本不在这里。"',
     },
     {
-        id: 'zhao',
-        name: '【温柔的混子】赵哥',
-        icon: '🧑‍🍳',
-        bio: '曾经也是卷王，现在看透了人生。他会劝你早点转行做 UI，或者带你去工作室后街吃火锅。虽然他不能带你拿奖，但他能保住你的头发。',
+        id: 'ai',
+        name: '【温柔的鼓励者】艾哥',
+        icon: '🧑‍🎓',
+        bio: 'UCL巴特莱特毕业的海归先锋派，永远带着笑容和你讨论方案，鼓励你的每一个想法。周末带学生看展、喝精酿，深受学生喜爱。',
         isSpecial: false,
         missions: [
             {
-                id: 'zhao_a',
+                id: 'ai_a',
                 description: '执行1次「社交大餐」',
                 type: 'actionCount',
                 actionId: 'hotpot',
                 count: 1,
             },
             {
-                id: 'zhao_b',
+                id: 'ai_b',
                 description: '保障到期末评图时压力低于50',
                 type: 'stressBelow',
                 threshold: 50,
             },
         ],
-        // 成功: 压力-30 + 本学期每周压力自增减少2
-        successReward: { stress: -30, weeklyStressReduction: 2 },
-        // 失败: 无惩罚, 赵哥请你喝奶茶 (压力-5 安慰)
+        successReward: { stress: -30, money: 500 },
+        // 失败: 无惩罚, 艾哥请你喝精酿 (压力-5 安慰)
         failPenalty: { stress: -5 },
-        successComment: '"行啊，活下来了。我就说嘛，人生除了画图还有火锅，别太压力大了。"',
-        failComment: '"赵哥不怪你，确实太卷了。早点睡吧，明天要是还画不出来，就去楼下散散心。"',
+        successComment: '"太棒了，你的状态管理做得很好！建筑学不只是设计，更是一种生活方式。周末一起去看个展吧。"',
+        failComment: '"艾哥不怕你，这学期确实不容易。周末带你去喝杯精酿放松一下，下学期我们重新来过。"',
     },
 ];
 
@@ -205,22 +202,27 @@ const getWeight = (id, weights) => weights[id] ?? DEFAULT_WEIGHT;
 /**
  * 根据权重随机抽取导师
  * @param {Object} weights - { tutorId: weight }
+ * @param {string[]} excludeIds - 要排除的导师ID列表（已选过的导师绝不再出现）
  * @returns {Object} 导师对象
  */
-export function drawTutor(weights = {}) {
-    const totalWeight = tutors.reduce((sum, t) => sum + Math.max(0, getWeight(t.id, weights)), 0);
+export function drawTutor(weights = {}, excludeIds = []) {
+    const excludeSet = new Set(excludeIds);
+    const available = tutors.filter(t => !excludeSet.has(t.id));
+    if (available.length === 0) return tutors[tutors.length - 1]; // 极端 fallback
+
+    const totalWeight = available.reduce((sum, t) => sum + Math.max(0, getWeight(t.id, weights)), 0);
     let random = Math.random() * totalWeight;
 
-    for (const tutor of tutors) {
+    for (const tutor of available) {
         const weight = Math.max(0, getWeight(tutor.id, weights));
         if (weight === 0) continue;
         random -= weight;
         if (random <= 0) return tutor;
     }
 
-    const validTutors = tutors.filter(t => getWeight(t.id, weights) > 0);
+    const validTutors = available.filter(t => getWeight(t.id, weights) > 0);
     if (validTutors.length > 0) return validTutors[validTutors.length - 1];
-    return tutors[tutors.length - 1]; // fallback
+    return available[available.length - 1]; // fallback
 }
 
 /**
@@ -321,6 +323,7 @@ export function isMissionComplete(mission, state, tracking) {
             return mission.conditions.every(cond => {
                 if (cond.target === 'progress') return (state.currentProject?.progress || 0) >= cond.threshold;
                 if (cond.target === 'quality') return (state.currentProject?.quality || 0) >= cond.threshold;
+                if (cond.target === 'stressBelow') return state.attributes.stress < cond.threshold;
                 return false;
             });
 
@@ -385,6 +388,8 @@ export function getMissionProgress(mission, state, tracking) {
                     return `进度 ${Math.floor(state.currentProject?.progress || 0)}%/${cond.threshold}%`;
                 if (cond.target === 'quality')
                     return `质量 ${Math.floor(state.currentProject?.quality || 0)}/${cond.threshold}`;
+                if (cond.target === 'stressBelow')
+                    return `压力 ${Math.floor(state.attributes.stress)}/需<${cond.threshold}`;
                 return '';
             }).join(' · ');
 

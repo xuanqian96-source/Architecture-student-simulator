@@ -126,5 +126,113 @@ export default function EventModal() {
     }
 
     // 交互抉择弹窗 (screen=choice时也可用此弹窗，但主要在ChoiceScreen)
+
+    // 金钱预警弹窗
+    if (state.ui.moneyWarning && !showEventModal) {
+        const handleDismissWarning = () => {
+            dispatch({ type: 'DISMISS_MONEY_WARNING' });
+        };
+
+        return (
+            <div style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 1000
+            }} onClick={handleDismissWarning}>
+                <div style={{
+                    background: 'white', borderRadius: '20px', padding: '32px',
+                    maxWidth: '480px', width: '90%',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                }} onClick={e => e.stopPropagation()}>
+                    <div style={{
+                        display: 'inline-block', padding: '4px 12px',
+                        background: '#FEF2F2', color: '#EF4444',
+                        borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+                        marginBottom: '12px', letterSpacing: '1px'
+                    }}>
+                        ⚠️ 金钱预警
+                    </div>
+
+                    <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1E293B', marginBottom: '12px' }}>
+                        💰 资金告急！
+                    </h2>
+
+                    <p style={{ fontSize: '15px', lineHeight: '1.8', color: '#475569', marginBottom: '20px' }}>
+                        你的余额已不足两周生活费，存在破产风险！请注意开源节流，合理安排支出。
+                    </p>
+
+                    <div style={{
+                        background: '#FEF2F2', borderRadius: '12px',
+                        padding: '14px 16px', marginBottom: '24px'
+                    }}>
+                        <div style={{ fontSize: '12px', fontWeight: '700', color: '#EF4444', marginBottom: '8px', letterSpacing: '1px' }}>
+                            当前余额
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: '900', color: '#EF4444' }}>
+                            ¥ {Math.floor(state.attributes.money).toLocaleString()}
+                        </div>
+                    </div>
+
+                    <button onClick={handleDismissWarning} style={{
+                        width: '100%', padding: '14px',
+                        background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+                        color: 'white', border: 'none', borderRadius: '12px',
+                        fontSize: '15px', fontWeight: '700', cursor: 'pointer'
+                    }}>
+                        我知道了
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // 游戏提示卡片（在随机事件和金钱预警之后，回到game主界面时才展示）
+    if (state.gameTip && !showEventModal && !state.ui.moneyWarning && state.ui.screen === 'game') {
+        const tip = state.gameTip;
+        const handleDismissTip = () => {
+            dispatch({ type: 'DISMISS_GAME_TIP' });
+        };
+
+        return (
+            <div style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 1000
+            }} onClick={handleDismissTip}>
+                <div style={{
+                    background: 'white', borderRadius: '20px', padding: '32px',
+                    maxWidth: '480px', width: '90%',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                }} onClick={e => e.stopPropagation()}>
+                    <div style={{
+                        display: 'inline-block', padding: '4px 12px',
+                        background: '#F3E8FF', color: '#7C3AED',
+                        borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+                        marginBottom: '12px', letterSpacing: '1px'
+                    }}>
+                        💡 游戏提示
+                    </div>
+
+                    <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1E293B', marginBottom: '12px' }}>
+                        {tip.icon} {tip.title}
+                    </h2>
+
+                    <p style={{ fontSize: '15px', lineHeight: '1.8', color: '#475569', marginBottom: '24px' }}>
+                        {tip.message}
+                    </p>
+
+                    <button onClick={handleDismissTip} style={{
+                        width: '100%', padding: '14px',
+                        background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                        color: 'white', border: 'none', borderRadius: '12px',
+                        fontSize: '15px', fontWeight: '700', cursor: 'pointer'
+                    }}>
+                        我知道了
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return null;
 }

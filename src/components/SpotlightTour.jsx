@@ -76,11 +76,18 @@ export default function SpotlightTour({ onComplete }) {
                         // 防止纵向被切断
                         if (tTop - 150 < 20) tTop = Math.max(tTop, 150);
                     }
-                    // 3. 右侧放不下，看看左侧行不行（纵向居中对齐）
+                    // 3. 右侧放不下，看看左侧行不行
                     else if (rect.left - 24 - tWidth >= 0) {
                         tLeft = rect.left - 24;
-                        tTop = rect.top + rect.height / 2;
-                        tTransform = 'translate(-100%, -50%)';
+                        if (step.tooltipAlign === 'top') {
+                            // 顶部对齐：文字框顶部与框选框顶部平齐（框选框有8px外扩）
+                            tTop = rect.top - 8;
+                            tTransform = 'translateX(-100%)';
+                        } else {
+                            // 默认：纵向居中对齐
+                            tTop = rect.top + rect.height / 2;
+                            tTransform = 'translate(-100%, -50%)';
+                        }
                     }
                     // 4. 两端均无净空，尝试中央上方或下方悬停（并且强制与目标区域垂直中轴线对齐）
                     else {
@@ -241,7 +248,7 @@ export default function SpotlightTour({ onComplete }) {
                 }}>
                     {step.content.split(/(\*\*.*?\*\*)/g).map((part, i) => {
                         if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i} style={{ color: '#0F172A', fontWeight: '800' }}>{part.slice(2, -2)}</strong>;
+                            return <strong key={i} style={{ color: '#3B82F6', fontWeight: '800' }}>{part.slice(2, -2)}</strong>;
                         }
                         return <span key={i}>{part}</span>;
                     })}

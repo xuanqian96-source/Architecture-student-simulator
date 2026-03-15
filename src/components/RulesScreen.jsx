@@ -77,13 +77,26 @@ export default function RulesScreen() {
                         </ul>
                     </section>
 
-                    <section>
+                    <section style={{ marginBottom: '24px' }}>
                         <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1E293B', marginBottom: '12px' }}>
                             💡 提示
                         </h3>
                         <p style={{ color: '#64748B', fontStyle: 'italic' }}>
                             合理平衡进度与质量,注意压力管理。不同身份有不同的初始优势和劣势,善用家庭生活费和技能!
                         </p>
+                    </section>
+
+                    <section>
+                        <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1E293B', marginBottom: '12px' }}>
+                            ⚙️ 游戏设置
+                        </h3>
+                        <p>右上角的 ⚙️ 齿轮按钮是你的游戏设置入口，包含以下功能：</p>
+                        <ul style={{ marginLeft: '20px', marginTop: '8px' }}>
+                            <li><strong>游戏说明</strong>：随时查阅完整的游戏规则与机制说明</li>
+                            <li><strong>再次查看新手指引</strong>：可以重新开启新手教程，随时复习</li>
+                            <li><strong>档案馆</strong>：查看你历史游戏中的结局记录</li>
+                            <li><strong>重新开始</strong>：放弃当前进度，开启全新的建筑生涯</li>
+                        </ul>
                     </section>
                 </div>
 

@@ -22,9 +22,15 @@ export function applyLearningDecay(attributeValue, increment) {
     return increment;
 }
 
-// 质量上限 = 设计能力 * 2.5
+// 质量上限 = 设计能力 * 2.5 (已废弃，改用年度质量上限)
 export function calculateQualityCap(designAbility) {
     return designAbility * 2.5;
+}
+
+// 年度质量上限：防止质量分数过度溢出
+const QUALITY_CAPS = { 1: 250, 2: 300, 3: 350, 4: 400, 5: 450 };
+export function getQualityCap(year) {
+    return QUALITY_CAPS[year] || 450;
 }
 
 // 每周生活费扣除

@@ -5,7 +5,7 @@ import { generateIdentity } from '../data/identities.js';
 import { drawProject } from '../data/projects.js';
 import { shopItems } from '../data/shop.js';
 import { checkFailureEnding, endings } from '../data/endings.js';
-import { internships } from '../data/employment.js';
+import { internships, canIntern } from '../data/employment.js';
 import { addTimestamp } from '../utils/formatters.js';
 import {
     calculateProgressGrowth,
@@ -14,9 +14,10 @@ import {
     clampAttribute,
     clampStress,
     WEEKLY_LIVING_COST,
-    getStressLevel
+    getStressLevel,
+    getQualityCap
 } from './calculator.js';
-import { conductMidtermReview, conductFinalReview, shouldTriggerReview, isMiddtermWeek } from './reviewSystem.js';
+import { conductMidtermReview, conductFinalReview, shouldTriggerReview, isMidtermWeek } from './reviewSystem.js';
 import { drawWeeklyEvent, applyEventEffects, applyChoiceEffect, formatEffectsForLog, recoverWeights } from './eventEngine.js';
 import { shouldTriggerModel } from '../data/models.js';
 import { drawTutor, drawMission, updateTutorWeights, isMissionComplete, applyTutorEffects } from '../data/tutors.js';
@@ -35,7 +36,6 @@ const initialState = {
     progress: {
         year: 1,
         week: 1,
-        semester: 1,
         totalWeeks: 0
     },
     currentProject: {
@@ -66,6 +66,7 @@ const initialState = {
         count: 0,
         limit: 2
     },
+    jobTakenThisWeek: false,
     weeklyFlags: {
         modelShown: false,
         reviewShown: false,
@@ -87,17 +88,21 @@ const initialState = {
         actionCounts: {},      // { polish: 0, lecture: 0, ... }
         softwareStart: 0,
         designStart: 0,
-        semesterSpending: 0,   // 非生活费主动消费
+        yearSpending: 0,       // 非生活费主动消费
     },
     tutorMissionResult: null,  // 最近一次导师任务判定结果 { success, comment }
     tutorWeights: {},          // 导师抽取权重
     tutorAppearHistory: [],    // 已出现导师ID列表
+    chosenTutorIds: [],         // 已选择过的导师ID（绝对不重复出现）
     // ===== 汇报系统 =====
     defenseResult: null,       // { strategy, success, narrative, effects }
     // ===== 导师奖励特殊状态 =====
     qualityDoubleCount: 0,     // 张姐奖励：剩余质量翻倍次数（当学期有效）
     weeklyStressReduction: 0,  // 赵哥奖励：每周压力自增减少量
     qualityMultiplier: 1,      // 陈工奖励：期末评图质量乘数
+    // ===== 游戏提示系统 =====
+    gameTip: null,                 // 当前待显示的游戏提示 { type, title, icon, message }
+    competitionReminderWeek: 0,    // 当前学年竞赛提醒目标周
 };
 
 // Action类型
@@ -122,7 +127,70 @@ export const ActionTypes = {
     PROCEED_TO_DEFENSE: 'PROCEED_TO_DEFENSE',
     COMPLETE_REVIEW_FLOW: 'COMPLETE_REVIEW_FLOW',
     TRIGGER_BANKRUPT: 'TRIGGER_BANKRUPT',
+    DISMISS_GAME_TIP: 'DISMISS_GAME_TIP',
 };
+
+// ===== 游戏提示生成辅助函数 =====
+function generateGameTip(week, year, state) {
+    // 实习提醒：大一~大四 每学年第3周
+    if (week === 3 && year <= 4) {
+        if (state.currentIntern) return null; // 已投递，不提醒
+        const hasEligible = internships.some(intern => canIntern(intern, state));
+        if (hasEligible) {
+            return {
+                type: 'intern',
+                title: '💡 实习推荐',
+                icon: '🤝',
+                message: '你的简历已经够格投递实习了！点击左下角「实习与工作」查看可投递的岗位。好机会不等人，快去投递吧！'
+            };
+        } else {
+            return null; // 无可投递实习，不弹提醒
+        }
+    }
+
+    // 雅思提醒：每学年第9周
+    if (week === 9 && year >= 2) {
+        if (state.ieltsYearTaken === year) return null; // 当年已报考
+        const best = state.bestIelts || 0;
+        if (best >= 7.5) return null; // 高分不提醒
+        if (best === 0) {
+            return {
+                type: 'ielts',
+                title: '✈️ 雅思报考提醒',
+                icon: '📝',
+                message: '还没考过雅思？如果你有出国留学的打算，现在开始准备不算晚！点击左下角「出国留学」报名参加雅思考试。'
+            };
+        } else {
+            return {
+                type: 'ielts',
+                title: '📝 雅思刷分建议',
+                icon: '🎯',
+                message: `你目前的雅思最高分是 ${best.toFixed(1)} 分，距离顶级名校要求的 7.5 分还有一段距离。再冲刺一次，说不定就飞跃了！`
+            };
+        }
+    }
+
+    // 竞赛投递提醒：大二开始，命中当年随机周
+    if (year >= 2 && week === (state.competitionReminderWeek || 0)) {
+        const unsubmitted = (state.portfolio || []).filter(p => !p.is_submitted);
+        if (unsubmitted.length > 0) {
+            return {
+                type: 'competition',
+                title: '🏆 竞赛投递提醒',
+                icon: '🏅',
+                message: '你的作品集里有尚未参赛的优秀作品！建筑竞赛是积攒荣誉与奖金的黄金机会，点击左下角「竞赛投稿」试试运气吧！'
+            };
+        }
+    }
+
+    return null;
+}
+
+// 金钱预警检测辅助函数
+function checkMoneyWarning(state) {
+    const weeklyLivingCost = state.identity?.family?.weeklyLivingCost || WEEKLY_LIVING_COST;
+    return state.attributes.money > 0 && state.attributes.money < weeklyLivingCost * 2;
+}
 
 // Reducer函数
 function gameReducer(state, action) {
@@ -138,7 +206,7 @@ function gameReducer(state, action) {
             let tempWeights = { ...state.tutorWeights };
             const usedIds = new Set();
             for (let i = 0; i < 3; i++) {
-                const candidate = drawTutor(tempWeights);
+                const candidate = drawTutor(tempWeights, []);
                 candidates.push(candidate);
                 usedIds.add(candidate.id);
                 // 临时降权避免重复出现在候选列表
@@ -187,25 +255,37 @@ function gameReducer(state, action) {
 
         case ActionTypes.PERFORM_ACTION: {
             const { actionType } = action.payload;
-            let newState = { ...state };
+            let newState = {
+                ...state,
+                attributes: { ...state.attributes },
+                currentProject: { ...state.currentProject },
+            };
             let logMessage = '';
 
             switch (actionType) {
                 case 'redbull': // 通宵画图
                     const progressIncr = Math.floor(5 + (state.attributes.software * 0.1));
                     newState.currentProject.progress += progressIncr;
-                    newState.attributes.stress += 15;
-                    logMessage = addTimestamp(`通宵画图: 进度+${progressIncr}, 压力+15`);
+                    newState.attributes.stress += 8;
+                    logMessage = addTimestamp(`通宵画图: 进度+${progressIncr}, 压力+8`);
                     break;
 
-                case 'polish': // 方案推敲
-                    const qualityIncr = Math.floor(4 + (state.attributes.design * 0.12));
+                case 'polish': { // 方案推敲
+                    const qualityCap = getQualityCap(state.progress.year);
+                    let qualityIncr = Math.floor(4 + (state.attributes.design * 0.08));
+                    // 如果已达到质量上限则不再增加
+                    if (newState.currentProject.quality >= qualityCap) {
+                        qualityIncr = 0;
+                    } else if (newState.currentProject.quality + qualityIncr > qualityCap) {
+                        qualityIncr = qualityCap - newState.currentProject.quality;
+                    }
                     newState.currentProject.quality += qualityIncr;
                     newState.attributes.stress += 8;
                     const designGain = applyLearningDecay(state.attributes.design, 0.5);
                     newState.attributes.design += designGain;
                     logMessage = addTimestamp(`方案推敲: 质量+${qualityIncr}, 压力+8, 设计+${designGain.toFixed(1)}`);
                     break;
+                }
 
                 case 'bilibili': // 软件教程
                     const softwareGain = state.attributes.software > 120 ? 3 : 5;
@@ -335,7 +415,7 @@ function gameReducer(state, action) {
             if (shouldTriggerReview(currentWeek) && !weeklyFlags.tutorJudgmentShown) {
                 // 判定导师任务
                 let tutorJudgmentResult = null;
-                const isMidterm = isMiddtermWeek(currentWeek);
+                const isMidterm = isMidtermWeek(currentWeek);
 
                 if (state.tutor && state.tutorMission) {
                     const shouldJudge = state.tutor.isSpecial ? !isMidterm : true;
@@ -409,7 +489,7 @@ function gameReducer(state, action) {
 
             // 3. 评图周（W6、W12）——只展示一次，不推进周数
             if (shouldTriggerReview(currentWeek) && !weeklyFlags.reviewShown) {
-                const reviewType = isMiddtermWeek(currentWeek) ? 'midterm' : 'final';
+                const reviewType = isMidtermWeek(currentWeek) ? 'midterm' : 'final';
                 const reviewFunc = reviewType === 'midterm' ? conductMidtermReview : conductFinalReview;
 
                 // 陈工奖励：期末评图 quality × qualityMultiplier
@@ -516,11 +596,18 @@ function gameReducer(state, action) {
                 let tempWeights = { ...state.tutorWeights };
                 const usedIds = new Set();
                 for (let i = 0; i < 3; i++) {
-                    const candidate = drawTutor(tempWeights);
+                    const candidate = drawTutor(tempWeights, state.chosenTutorIds || []);
                     candidates.push(candidate);
                     usedIds.add(candidate.id);
                     // 临时降权避免重复出现在候选列表
                     tempWeights = { ...tempWeights, [candidate.id]: 0 };
+                }
+
+                // 新学年随机选定竞赛提醒周（大二起生效）
+                let newCompWeek = state.competitionReminderWeek || 0;
+                if (nextYear >= 2) {
+                    const candidateWeeks = [2, 4, 8, 10];
+                    newCompWeek = candidateWeeks[Math.floor(Math.random() * candidateWeeks.length)];
                 }
 
                 // 存储候选信息和新课题，等玩家选择后再正式推进
@@ -528,6 +615,7 @@ function gameReducer(state, action) {
                     ...newState,
                     inventory: semInventory,
                     currentIntern: null,  // 新学年清空实习状态
+                    competitionReminderWeek: newCompWeek,
                     // 临时存储候选和新课题
                     pendingNewSemester: {
                         candidates,
@@ -578,9 +666,10 @@ function gameReducer(state, action) {
                 newState.attributes.design += state.identity.school.weeklyGrowth;
             }
 
-            // 4. 生活费扣除
-            newState.attributes.money -= WEEKLY_LIVING_COST;
-            logs.push(addTimestamp(`生活费-¥${WEEKLY_LIVING_COST}`));
+            // 4. 生活费扣除（根据家庭背景不同）
+            const weeklyLivingCost = state.identity.family.weeklyLivingCost || WEEKLY_LIVING_COST;
+            newState.attributes.money -= weeklyLivingCost;
+            logs.push(addTimestamp(`生活费-¥${weeklyLivingCost}`));
 
             // 实习工资
             if (state.currentIntern) {
@@ -600,6 +689,13 @@ function gameReducer(state, action) {
                 newState.attributes.money += state.identity.family.monthlyAllowance;
                 logs.push(addTimestamp(`收到生活费+¥${state.identity.family.monthlyAllowance}`));
             }
+            // 新学年第一周也发放生活费（第一年第一周除外）
+            if (nextWeek === 1 && nextYear !== 1 && nextYear !== currentYear) {
+                newState.attributes.money += state.identity.family.monthlyAllowance;
+                logs.push(addTimestamp(`新学年生活费+¥${state.identity.family.monthlyAllowance}`));
+            }
+
+
 
             // 5.5 商店被动效果
             // 星巴克永久会员: 每周压力-5
@@ -646,6 +742,7 @@ function gameReducer(state, action) {
                 };
                 newState.weeklyActions = { count: 0, limit: newState.redbullAPBoost ? 3 : 2 };
                 newState.redbullAPBoost = false;
+                newState.jobTakenThisWeek = false;
 
                 // 13. 检查结局
                 const endingR = checkFailureEnding(newState);
@@ -673,8 +770,16 @@ function gameReducer(state, action) {
                 newState.ui.logs = logs;
                 newState.ui.narrative = `第${nextYear}学年 第${nextWeek}周`;
 
+                // 金钱预警检测
+                const warningThreshold = (state.identity.family.weeklyLivingCost || WEEKLY_LIVING_COST) * 2;
+                const showMoneyWarning = newState.attributes.money > 0 && newState.attributes.money < warningThreshold;
+
+                // 游戏提示生成（在事件和金钱预警之后展示）
+                const eventTip = generateGameTip(nextWeek, nextYear, newState);
+
                 return {
                     ...newState,
+                    gameTip: eventTip,
                     usedEventIds: [...(state.usedEventIds || []), evt.id],
                     ui: {
                         ...newState.ui,
@@ -684,6 +789,7 @@ function gameReducer(state, action) {
                             description: evt.description,
                             effects: evt.effects
                         },
+                        moneyWarning: showMoneyWarning,
                         logs
                     }
                 };
@@ -701,9 +807,18 @@ function gameReducer(state, action) {
                 };
                 newState.weeklyActions = { count: 0, limit: newState.redbullAPBoost ? 3 : 2 };
                 newState.redbullAPBoost = false;
+                newState.jobTakenThisWeek = false;
+
+                // 金钱预警检测
+                const choiceWarningThreshold = (state.identity.family.weeklyLivingCost || WEEKLY_LIVING_COST) * 2;
+                const showChoiceMoneyWarning = newState.attributes.money > 0 && newState.attributes.money < choiceWarningThreshold;
+
+                // 游戏提示生成
+                const choiceTip = generateGameTip(nextWeek, nextYear, newState);
 
                 return {
                     ...newState,
+                    gameTip: choiceTip,
                     usedEventIds: [...(state.usedEventIds || []), choice.id],
                     ui: {
                         ...state.ui,
@@ -711,70 +826,13 @@ function gameReducer(state, action) {
                         pendingChoice: choice,
                         narrative: choice.description,
                         logs,
-                        currentEvent: null
+                        currentEvent: null,
+                        moneyWarning: showChoiceMoneyWarning
                     }
                 };
             }
 
-            // 11. 更新进度状态
-            newState.progress = {
-                year: nextYear,
-                week: nextWeek,
-                totalWeeks: state.progress.totalWeeks + 1
-            };
-
-            // 12. 重置每周行动次数
-            newState.weeklyActions = {
-                count: 0,
-                limit: newState.redbullAPBoost ? 3 : 2
-            };
-            newState.redbullAPBoost = false;
-
-            // 13. 检查失败结局 (破产/劝退/飞人)
-            const failureEnding = checkFailureEnding(newState);
-            if (failureEnding) {
-                return {
-                    ...newState,
-                    ui: {
-                        ...state.ui,
-                        screen: 'ending',
-                        ending: failureEnding,
-                        narrative: failureEnding.description,
-                        logs
-                    }
-                };
-            }
-
-            // 14. 检查是否达到60周强制毕业（不自动判定好坏，只给平庸毕业）
-            if (newState.progress.totalWeeks > 60) {
-                const { endings } = require('../data/endings.js');
-                const defaultEnding = endings.default_graduate;
-                return {
-                    ...newState,
-                    ui: {
-                        ...state.ui,
-                        screen: 'ending',
-                        ending: defaultEnding,
-                        narrative: defaultEnding.description,
-                        logs
-                    }
-                };
-            }
-
-            // 属性边界检查
-            newState.attributes.design = clampAttribute(newState.attributes.design);
-            newState.attributes.software = clampAttribute(newState.attributes.software);
-            newState.attributes.stress = clampStress(newState.attributes.stress);
-            newState.attributes.money = Math.max(0, newState.attributes.money);
-            if (newState.currentProject) {
-                newState.currentProject.progress = Math.max(0, newState.currentProject.progress);
-                newState.currentProject.quality = Math.max(0, newState.currentProject.quality);
-            }
-
-            newState.ui.logs = logs;
-            newState.ui.narrative = eventNarrative;
-
-            return newState;
+            // (已删除不可达的死代码: 原L719-L777)
         }
 
         case ActionTypes.MAKE_CHOICE: {
@@ -816,7 +874,11 @@ function gameReducer(state, action) {
 
         case ActionTypes.MAKE_MODEL: {
             const { modelOption } = action.payload;
-            let newState = { ...state };
+            let newState = {
+                ...state,
+                attributes: { ...state.attributes },
+                currentProject: { ...state.currentProject },
+            };
 
             newState.attributes.money -= modelOption.cost;
             newState.currentProject.quality += modelOption.qualityBonus;
@@ -839,37 +901,37 @@ function gameReducer(state, action) {
 ${modelOption.description}
 
 质量+${modelOption.qualityBonus}`,
-                    logs: [...state.ui.logs, addTimestamp(`模型制作: ${modelOption.name}, 质量+${modelOption.qualityBonus}, 金钱-¥${modelOption.cost}`)]
+                    logs: [...state.ui.logs, addTimestamp(`模型制作: ${modelOption.name}, 质量+${modelOption.qualityBonus}, 金钱-¥${modelOption.cost}`)],
+                    moneyWarning: checkMoneyWarning(newState)
                 }
             };
         }
 
         case ActionTypes.PURCHASE_ITEM: {
             const { item } = action.payload;
-            let newState = { ...state };
 
-            newState.attributes.money -= item.price;
-            newState.inventory.push(item.id);
+            // 深拷贝避免状态突变（React StrictMode下reducer执行两次）
+            const newAttrs = { ...state.attributes };
+            newAttrs.money -= item.price;
+            if (item.effect.design) newAttrs.design += item.effect.design;
+            if (item.effect.software) newAttrs.software += item.effect.software;
+            if (item.effect.stress) newAttrs.stress += item.effect.stress;
 
-            // 应用道具效果
-            if (item.effect.design) {
-                newState.attributes.design += item.effect.design;
-            }
-            if (item.effect.software) {
-                newState.attributes.software += item.effect.software;
-            }
-            if (item.effect.stress) {
-                newState.attributes.stress += item.effect.stress;
-            }
-
+            const newInventory = [...state.inventory, item.id];
             const purchaseLog = addTimestamp(`🛒 购买: ${item.name} -¥${item.price}`);
+
+            const newState = {
+                ...state,
+                attributes: newAttrs,
+                inventory: newInventory,
+            };
 
             const endingR = checkFailureEnding(newState);
             if (endingR) {
                 return {
                     ...newState,
                     ui: {
-                        ...newState.ui,
+                        ...state.ui,
                         screen: 'ending',
                         ending: endingR,
                         narrative: endingR.description
@@ -882,7 +944,8 @@ ${modelOption.description}
                 ui: {
                     ...state.ui,
                     narrative: `购买成功: ${item.name}\n\n${item.description}`,
-                    logs: [...state.ui.logs, purchaseLog]
+                    logs: [...state.ui.logs, purchaseLog],
+                    moneyWarning: checkMoneyWarning(newState)
                 }
             };
         }
@@ -901,7 +964,11 @@ ${modelOption.description}
                 };
             }
 
-            let newState = { ...state };
+            let newState = {
+                ...state,
+                attributes: { ...state.attributes },
+                currentProject: { ...state.currentProject },
+            };
 
             // 应用技能效果
             const effect = skill.effect;
@@ -934,14 +1001,18 @@ ${modelOption.description}
                 ui: {
                     ...state.ui,
                     narrative: `使用技能: ${skill.name}\n\n${skill.description}`,
-                    logs: [...state.ui.logs, skillLog]
+                    logs: [...state.ui.logs, skillLog],
+                    moneyWarning: effect.moneyCost ? checkMoneyWarning(newState) : state.ui.moneyWarning
                 }
             };
         }
 
         case ActionTypes.TAKE_JOB: {
             const { job } = action.payload;
-            let newState = { ...state };
+            let newState = {
+                ...state,
+                attributes: { ...state.attributes },
+            };
 
             newState.attributes.money += job.payment;
             newState.attributes.stress = clampStress(newState.attributes.stress + 20); // 接私活增加压力
@@ -956,6 +1027,7 @@ ${modelOption.description}
 
             return {
                 ...newState,
+                jobTakenThisWeek: true,
                 ui: {
                     ...state.ui,
                     screen: 'game', // 接单后返回游戏主界面
@@ -1003,6 +1075,20 @@ ${modelOption.description}
             };
         }
 
+        case 'DISMISS_MONEY_WARNING': {
+            return {
+                ...state,
+                ui: { ...state.ui, moneyWarning: false }
+            };
+        }
+
+        case 'DISMISS_GAME_TIP': {
+            return {
+                ...state,
+                gameTip: null
+            };
+        }
+
         case ActionTypes.BUY_ITEM: {
             const { item } = action.payload;
             // 扣钱并加入inventory
@@ -1026,7 +1112,8 @@ ${modelOption.description}
                 tutorMissionTracking: updatedTracking,
                 ui: {
                     ...state.ui,
-                    logs: [...state.ui.logs, newLog]
+                    logs: [...state.ui.logs, newLog],
+                    moneyWarning: checkMoneyWarning({ ...state, attributes: newAttrs })
                 }
             };
         }
@@ -1142,6 +1229,7 @@ ${modelOption.description}
                 tutorMissionResult: null,
                 tutorWeights: finalWeights,
                 tutorAppearHistory: finalHistory,
+                chosenTutorIds: [...(state.chosenTutorIds || []), chosenTutor.id],
                 defenseResult: null,
                 qualityDoubleCount: 0,
                 weeklyStressReduction: 0,
@@ -1268,7 +1356,7 @@ ${modelOption.description}
                 let tempWeights = { ...state.tutorWeights };
                 const usedIds = new Set();
                 for (let i = 0; i < 3; i++) {
-                    const candidate = drawTutor(tempWeights);
+                    const candidate = drawTutor(tempWeights, state.chosenTutorIds || []);
                     candidates.push(candidate);
                     usedIds.add(candidate.id);
                     tempWeights = { ...tempWeights, [candidate.id]: 0 };
@@ -1294,6 +1382,7 @@ ${modelOption.description}
             newState.weeklyFlags = { modelShown: false, reviewShown: false, defenseShown: false, tutorJudgmentShown: false };
             newState.weeklyActions = { count: 0, limit: newState.redbullAPBoost ? 3 : 2 };
             newState.redbullAPBoost = false;
+            newState.jobTakenThisWeek = false;
             newState.pendingReviewResult = null;
             Object.assign(newState, extraUpdates);
 

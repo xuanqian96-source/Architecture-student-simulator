@@ -17,12 +17,15 @@ export default function JobScreen() {
     const { state, dispatch, ActionTypes } = useGame();
     const { attributes, weeklyActions } = state;
     const isActionLimitReached = weeklyActions.count >= weeklyActions.limit;
+    const jobTakenThisWeek = state.jobTakenThisWeek || false;
 
     const handleClose = () => {
         dispatch({ type: ActionTypes.CHANGE_SCREEN, payload: { screen: 'game' } });
     };
 
     const handleTakeJob = (job) => {
+        // 检查本周是否已接过私活
+        if (jobTakenThisWeek) return;
         // 检查能力是否满足
         const req = job.requirement;
         if (req.software !== undefined && attributes.software < req.software) return;
@@ -113,6 +116,23 @@ export default function JobScreen() {
                 </div>
             )}
 
+            {/* 本周已接私活提示 */}
+            {jobTakenThisWeek && !isActionLimitReached && (
+                <div style={{
+                    padding: '12px 16px',
+                    background: '#DBEAFE',
+                    border: '1px solid #3B82F6',
+                    borderRadius: '10px',
+                    marginBottom: '14px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#1E40AF',
+                    flexShrink: 0
+                }}>
+                    💼 本周已接取过私活，每周仅限接取一次，下周刷新
+                </div>
+            )}
+
             {/* 私活列表 */}
             <div style={{
                 display: 'grid',
@@ -122,7 +142,7 @@ export default function JobScreen() {
                 flex: 1
             }}>
                 {jobs.map(job => {
-                    const canDo = meetsRequirement(job) && !isActionLimitReached;
+                    const canDo = meetsRequirement(job) && !isActionLimitReached && !jobTakenThisWeek;
                     const meetsReq = meetsRequirement(job);
 
                     return (

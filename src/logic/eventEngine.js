@@ -49,6 +49,21 @@ export function applyEventEffects(gameState, effects) {
     if (effects.progress) newState.currentProject.progress += effects.progress;
     if (effects.quality) newState.currentProject.quality += effects.quality;
 
+    // 特殊效果
+    if (effects.energyBoost) {
+        // 咖啡因爆发：本周额外行动+1
+        newState.weeklyActions = {
+            ...newState.weeklyActions,
+            limit: (newState.weeklyActions?.limit || 2) + 1,
+        };
+    }
+    if (effects.crashRisk) {
+        // 电脑故障风险：50% 概率丢失进度
+        if (Math.random() < 0.5) {
+            newState.currentProject.progress = Math.max(0, (newState.currentProject.progress || 0) - 15);
+        }
+    }
+
     // 强制除金钱外的所有数值 >= 0 (金钱必须暴露真实负值以触发破产甚至0值也触发)
     newState.attributes.design = Math.max(0, newState.attributes.design);
     newState.attributes.software = Math.max(0, newState.attributes.software);

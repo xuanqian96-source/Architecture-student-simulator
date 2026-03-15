@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
-import { shouldTriggerReview, isMiddtermWeek } from '../logic/reviewSystem';
+import { shouldTriggerReview, isMidtermWeek } from '../logic/reviewSystem';
 import SkillModal from './SkillModal';
 
 

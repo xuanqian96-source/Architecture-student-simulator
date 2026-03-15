@@ -209,9 +209,19 @@ export default function CareerScreen() {
                                 {job.requirements.software && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>软件能力:</span><span style={{ color: state.attributes.software >= job.requirements.software ? '#10B981' : '#EF4444' }}>≥ {job.requirements.software}</span></div>}
                                 {job.requirements.ps && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>作品集评分:</span><span style={{ color: getPortfolioScore(state.portfolio) >= job.requirements.ps ? '#10B981' : '#EF4444' }}>≥ {job.requirements.ps}</span></div>}
                                 {job.requirements.ielts && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>雅思成绩:</span><span style={{ color: (state.bestIelts || 0) >= job.requirements.ielts ? '#10B981' : '#EF4444' }}>≥ {job.requirements.ielts}</span></div>}
-                                {job.requirements.schoolTier && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>学历要求:</span><span style={{ color: job.requirements.schoolTier.includes(state.identity?.school?.id) ? '#10B981' : '#EF4444' }}>{job.requirements.schoolTier.includes('elite') ? '985/211或新八校' : '符合要求'}</span></div>}
-                                {job.requirements.internType && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>经历要求:</span><span style={{ color: (state.internHistory || []).some(i => (i.id || i) === job.requirements.internType) ? '#10B981' : '#EF4444' }}>特定名企实习</span></div>}
-                                {job.requirements.internCount && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>经历要求:</span><span style={{ color: (state.internHistory || []).filter(i => (i.id || i) === job.requirements.internCount.type).length >= job.requirements.internCount.min ? '#10B981' : '#EF4444' }}>相关实习 ≥ {job.requirements.internCount.min}次</span></div>}
+                                {job.requirements.schoolTier && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>学历要求:</span><span style={{ color: job.requirements.schoolTier.includes(state.identity?.school?.id) ? '#10B981' : '#EF4444' }}>老八校 / 新八校 {job.requirements.schoolTier.includes(state.identity?.school?.id) ? '✅' : '❌'}</span></div>}
+                                {job.requirements.internType && (() => {
+                                    const internName = internships.find(i => i.id === job.requirements.internType)?.name || '特定实习';
+                                    const count = (state.internHistory || []).filter(i => (i.id || i) === job.requirements.internType).length;
+                                    const met = count >= 1;
+                                    return <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>{internName}实习:</span><span style={{ color: met ? '#10B981' : '#EF4444' }}>{count}/1</span></div>;
+                                })()}
+                                {job.requirements.internCount && (() => {
+                                    const internName = internships.find(i => i.id === job.requirements.internCount.type)?.name || '相关实习';
+                                    const count = (state.internHistory || []).filter(i => (i.id || i) === job.requirements.internCount.type).length;
+                                    const met = count >= job.requirements.internCount.min;
+                                    return <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>{internName}实习:</span><span style={{ color: met ? '#10B981' : '#EF4444' }}>{count}/{job.requirements.internCount.min}</span></div>;
+                                })()}
                             </div>
 
                             <button

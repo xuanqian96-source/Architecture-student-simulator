@@ -68,6 +68,6 @@ export function shouldTriggerReview(week) {
 }
 
 // 判断是期中还是期末
-export function isMiddtermWeek(week) {
+export function isMidtermWeek(week) {
     return week === 6;
 }

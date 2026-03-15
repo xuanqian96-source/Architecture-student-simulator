@@ -8,7 +8,7 @@ export const postgradTiers = [
         name: '清华 / 同济 / 东南',
         icon: '👑',
         psRequirement: 1200,
-        designRequirement: 140,
+        designRequirement: 180,
         passScore: 50, // 满分50，必须全对
         description: '全球建筑学殿堂级平台，容错率为零。'
     },
@@ -18,7 +18,7 @@ export const postgradTiers = [
         name: '老八校 / 名牌985',
         icon: '🎓',
         psRequirement: 1000,
-        designRequirement: 140,
+        designRequirement: 180,
         passScore: 35,
         description: '允许少量平庸回答，但核心逻辑必须正确。'
     },
@@ -28,7 +28,7 @@ export const postgradTiers = [
         name: '本校 / 211 / 名省院',
         icon: '📚',
         psRequirement: 800,
-        designRequirement: 140,
+        designRequirement: 180,
         passScore: 25,
         description: '及格水平即可，展现基础专业素养。'
     }
@@ -38,7 +38,7 @@ export const postgradTiers = [
 export const postgradRequirements = {
     minWeek: 48, // 大四结束（第4年12周 = 48周后）
     minPS: 800,
-    minDesign: 140,
+    minDesign: 180,
     maxWarnings: 0 // 不能有任何挂科
 };
 

@@ -9,7 +9,7 @@ export default function ModelScreen() {
     const { money } = state.attributes;
 
     const handleSelect = (modelOption) => {
-        if (money >= modelOption.cost) {
+        if (money > modelOption.cost) {
             dispatch({ type: ActionTypes.MAKE_MODEL, payload: { modelOption } });
         }
     };
@@ -70,7 +70,7 @@ export default function ModelScreen() {
                 overflowY: 'auto'
             }}>
                 {modelOptions.map(option => {
-                    const canAfford = money >= option.cost;
+                    const canAfford = money > option.cost;
                     return (
                         <div
                             key={option.id}

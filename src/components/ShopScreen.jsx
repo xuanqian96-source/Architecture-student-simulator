@@ -31,10 +31,10 @@ export default function ShopScreen() {
         const owned = inventory.includes(item.id);
         if (item.repeatable) {
             // 可重复购买商品：仅需检查钱和是否已在本周购买
-            if (money >= item.price && !owned) {
+            if (money > item.price && !owned) {
                 dispatch({ type: ActionTypes.PURCHASE_ITEM, payload: { item } });
             }
-        } else if (!owned && money >= item.price) {
+        } else if (!owned && money > item.price) {
             dispatch({ type: ActionTypes.PURCHASE_ITEM, payload: { item } });
         }
     };
@@ -104,7 +104,7 @@ export default function ShopScreen() {
             }}>
                 {shopItems.map(item => {
                     const owned = inventory.includes(item.id);
-                    const canAfford = money >= item.price;
+                    const canAfford = money > item.price;
                     const isRepeatable = item.repeatable;
                     const isSemesterRepeatable = item.semesterRepeatable;
                     const effectTags = formatEffectTags(item.effect);

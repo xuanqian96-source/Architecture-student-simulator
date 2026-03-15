@@ -3,6 +3,7 @@
 import React from 'react';
 import { useGame } from '../logic/gameState';
 import { getRarity } from './InitScreen';
+import { WEEKLY_LIVING_COST } from '../logic/calculator';
 
 // 按学校+家庭背景映射头像图标
 const IDENTITY_ICONS = {
@@ -37,6 +38,10 @@ export default function StatsSidebar() {
     const { identity, attributes, progress } = state;
 
     if (!identity) return null;
+
+    // 流程保护：评图/模型/汇报/导师抽取/拉样选择等流程进行中时，禁止侧边栏导航
+    const flowScreens = ['review', 'model', 'defense', 'reviewFlow', 'tutorDraw', 'choice'];
+    const isInFlow = flowScreens.includes(state.ui.screen);
 
     const getStressColor = (stress) => {
         if (stress >= 80) return 'stress-high';
@@ -146,7 +151,19 @@ export default function StatsSidebar() {
                 {/* 金钱 */}
                 <div className="attribute-item">
                     <div className="attribute-label">金钱 Money</div>
-                    <div className="attribute-value">¥ {Math.floor(attributes.money).toLocaleString()}</div>
+                    {(() => {
+                        const weeklyLivingCost = identity.family?.weeklyLivingCost || WEEKLY_LIVING_COST;
+                        const isLowMoney = attributes.money > 0 && attributes.money < weeklyLivingCost * 2;
+                        return (
+                            <div className="attribute-value" style={{
+                                color: isLowMoney ? '#EF4444' : undefined,
+                                fontWeight: isLowMoney ? '900' : undefined,
+                            }}>
+                                {isLowMoney && <span style={{ marginRight: '4px' }}>⚠️</span>}
+                                ¥ {Math.floor(attributes.money).toLocaleString()}
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
 
@@ -154,7 +171,8 @@ export default function StatsSidebar() {
             <div className="sidebar-bottom-actions" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {/* 作品集入口 */}
                 <button
-                    onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'portfolio' } })}
+                    onClick={() => !isInFlow && dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'portfolio' } })}
+                    disabled={isInFlow}
                     style={{
                         width: '100%',
                         padding: '20px',
@@ -164,7 +182,8 @@ export default function StatsSidebar() {
                         borderRadius: '16px',
                         fontWeight: '800',
                         fontSize: '15px',
-                        cursor: 'pointer',
+                        cursor: isInFlow ? 'not-allowed' : 'pointer',
+                        opacity: isInFlow ? 0.5 : 1,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -202,42 +221,42 @@ export default function StatsSidebar() {
                     {/* 竞赛投稿 */}
                     <GraduationOptionButton
                         icon="🏅" label="竞赛投稿"
-                        isActive={true}
+                        isActive={!isInFlow}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'competitions' } })}
                     />
 
                     {/* 国外留学 (大一激活雅思考试，大五激活申请) */}
                     <GraduationOptionButton
                         icon="✈️" label="出国留学"
-                        isActive={true}
+                        isActive={!isInFlow}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'studyAbroad' } })}
                     />
 
                     {/* 申请保研 (大四结束，即第4年12周后激活) */}
                     <GraduationOptionButton
                         icon="👑" label="申请保研"
-                        isActive={true}
+                        isActive={!isInFlow}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'postgrad' } })}
                     />
 
                     {/* 实习与求职 (全年级激活寻找实习，大五激活全职) */}
                     <GraduationOptionButton
                         icon="🤝" label="实习与工作"
-                        isActive={true}
+                        isActive={!isInFlow}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'jobSearch' } })}
                     />
 
                     {/* 参加考研 (大五激活) */}
                     <GraduationOptionButton
                         icon="📚" label="参加考研"
-                        isActive={true}
+                        isActive={!isInFlow}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examGrad' } })}
                     />
 
                     {/* 决定考公 (大五激活) */}
                     <GraduationOptionButton
                         icon="🍵" label="考公选调"
-                        isActive={true}
+                        isActive={!isInFlow}
                         onClick={() => dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'examCivil' } })}
                     />
                 </div>
