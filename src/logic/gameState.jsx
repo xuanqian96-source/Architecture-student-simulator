@@ -6,6 +6,7 @@ import { drawProject } from '../data/projects.js';
 import { shopItems } from '../data/shop.js';
 import { checkFailureEnding, endings } from '../data/endings.js';
 import { internships, canIntern } from '../data/employment.js';
+import { atlasMilestones } from '../data/atlas.js';
 import { addTimestamp } from '../utils/formatters.js';
 import {
     calculateProgressGrowth,
@@ -103,6 +104,15 @@ const initialState = {
     // ===== 游戏提示系统 =====
     gameTip: null,                 // 当前待显示的游戏提示 { type, title, icon, message }
     competitionReminderWeek: 0,    // 当前学年竞赛提醒目标周
+    // ===== 建筑朝圣之旅 =====
+    atlas: {
+        unlocked: false,            // 是否已解锁（大二开始）
+        visited: [],                // 已点亮的建筑ID列表
+        currentExpedition: null,    // 当前考察 { buildingId, weeksLeft }
+        expeditionComplete: null,   // 待展示的完成通知 { buildingId }
+        pendingMilestone: null,     // 待展示的里程碑 { title, desc, reward }
+        claimedMilestones: [],      // 已领取的里程碑 count列表
+    },
 };
 
 // Action类型
@@ -128,6 +138,8 @@ export const ActionTypes = {
     COMPLETE_REVIEW_FLOW: 'COMPLETE_REVIEW_FLOW',
     TRIGGER_BANKRUPT: 'TRIGGER_BANKRUPT',
     DISMISS_GAME_TIP: 'DISMISS_GAME_TIP',
+    START_EXPEDITION: 'START_EXPEDITION',
+    DISMISS_EXPEDITION_COMPLETE: 'DISMISS_EXPEDITION_COMPLETE',
 };
 
 // ===== 游戏提示生成辅助函数 =====
@@ -616,6 +628,10 @@ function gameReducer(state, action) {
                     inventory: semInventory,
                     currentIntern: null,  // 新学年清空实习状态
                     competitionReminderWeek: newCompWeek,
+                    atlas: {
+                        ...(newState.atlas || { unlocked: false, visited: [], currentExpedition: null, expeditionComplete: null, pendingMilestone: null, claimedMilestones: [] }),
+                        unlocked: nextYear >= 2 ? true : (newState.atlas || {}).unlocked || false
+                    },
                     // 临时存储候选和新课题
                     pendingNewSemester: {
                         candidates,
@@ -721,6 +737,42 @@ function gameReducer(state, action) {
             // 7. 技能冷却减少
             if (newState.skillCooldown > 0) {
                 newState.skillCooldown -= 1;
+            }
+
+            // 8. 建筑朝圣之旅：考察倒计时（解锁已在新学年早期返回中处理）
+            const atlasState = newState.atlas || { unlocked: false, visited: [], currentExpedition: null, expeditionComplete: null, pendingMilestone: null, claimedMilestones: [] };
+            newState.atlas = atlasState;
+            if (atlasState.currentExpedition) {
+                const exp = { ...newState.atlas.currentExpedition };
+                exp.weeksLeft -= 1;
+                if (exp.weeksLeft <= 0) {
+                    // 考察完成
+                    const newVisited = [...newState.atlas.visited, exp.buildingId];
+                    // 检查里程碑
+                    let pendingMilestone = null;
+                    for (const ms of atlasMilestones) {
+                        if (newVisited.length >= ms.count && !(newState.atlas.claimedMilestones || []).includes(ms.count)) {
+                            pendingMilestone = ms;
+                            // 应用里程碑奖励
+                            if (ms.reward.design) newState.attributes.design += ms.reward.design;
+                            if (ms.reward.software) newState.attributes.software += ms.reward.software;
+                            if (ms.reward.portfolioScore) newState.portfolioScore = (newState.portfolioScore || 0) + ms.reward.portfolioScore;
+                            break; // 一次只弹一个
+                        }
+                    }
+                    newState.atlas = {
+                        ...newState.atlas,
+                        visited: newVisited,
+                        currentExpedition: null,
+                        expeditionComplete: { buildingId: exp.buildingId },
+                        pendingMilestone,
+                        claimedMilestones: pendingMilestone
+                            ? [...(newState.atlas.claimedMilestones || []), pendingMilestone.count]
+                            : (newState.atlas.claimedMilestones || []),
+                    };
+                } else {
+                    newState.atlas = { ...newState.atlas, currentExpedition: exp };
+                }
             }
 
             // 9. 每周必触发一个事件(随机事件 or 交互抉择)
@@ -1089,6 +1141,41 @@ ${modelOption.description}
             };
         }
 
+        case 'START_EXPEDITION': {
+            const { buildingId, cost, weeks } = action.payload;
+            return {
+                ...state,
+                attributes: {
+                    ...state.attributes,
+                    money: state.attributes.money - cost
+                },
+                atlas: {
+                    ...state.atlas,
+                    currentExpedition: { buildingId, weeksLeft: weeks }
+                }
+            };
+        }
+
+        case 'DISMISS_EXPEDITION_COMPLETE': {
+            // 两步流程：先关闭考察完成，再关闭里程碑
+            if (state.atlas.expeditionComplete) {
+                return {
+                    ...state,
+                    atlas: {
+                        ...state.atlas,
+                        expeditionComplete: null
+                    }
+                };
+            }
+            return {
+                ...state,
+                atlas: {
+                    ...state.atlas,
+                    pendingMilestone: null
+                }
+            };
+        }
+
         case ActionTypes.BUY_ITEM: {
             const { item } = action.payload;
             // 扣钱并加入inventory
@@ -1363,9 +1450,22 @@ ${modelOption.description}
                 }
 
                 screenToNav = 'tutorDraw';
+
+                // 竞赛提醒周随机选定（大二起）
+                let newCompWeek = state.competitionReminderWeek || 0;
+                if (nextYear >= 2) {
+                    const candidateWeeks = [2, 4, 8, 10];
+                    newCompWeek = candidateWeeks[Math.floor(Math.random() * candidateWeeks.length)];
+                }
+
                 extraUpdates = {
                     inventory: semInventory,
                     currentIntern: null, // 清空实习状态
+                    competitionReminderWeek: newCompWeek,
+                    atlas: {
+                        ...(state.atlas || { unlocked: false, visited: [], currentExpedition: null, expeditionComplete: null, pendingMilestone: null, claimedMilestones: [] }),
+                        unlocked: nextYear >= 2 ? true : (state.atlas || {}).unlocked || false
+                    },
                     pendingNewSemester: {
                         candidates,
                         newProject,

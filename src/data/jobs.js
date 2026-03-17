@@ -11,7 +11,7 @@ export const jobs = [
     {
         id: 'su',
         name: 'SU简单建模',
-        requirement: { software: 60, design: 30 },
+        requirement: { design: 60, software: 30 },
         payment: 2500,
         description: '甲方觉得五分钟就能推出来。'
     },

@@ -211,6 +211,82 @@ export default function StatsSidebar() {
                     )}
                 </button>
 
+                {/* 建筑朝圣之旅入口 — 始终显示，大二解锁 */}
+                {(() => {
+                    const isUnlocked = state.atlas?.unlocked;
+                    const isDisabled = !isUnlocked || isInFlow;
+                    return (
+                        <button
+                            onClick={() => isUnlocked && !isInFlow && dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'atlas' } })}
+                            disabled={isDisabled}
+                            style={{
+                                width: '100%',
+                                padding: '20px',
+                                background: isUnlocked ? 'white' : '#F3F4F6',
+                                color: isUnlocked ? '#334155' : '#9CA3AF',
+                                border: 'none',
+                                borderRadius: '16px',
+                                fontWeight: '800',
+                                fontSize: '15px',
+                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                                transition: 'all 0.2s ease',
+                                position: 'relative',
+                            }}
+                            onMouseOver={(e) => {
+                                if (!isDisabled) {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+                                }
+                            }}
+                            onMouseOut={(e) => {
+                                if (!isDisabled) {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+                                }
+                            }}
+                        >
+                            <span style={{ fontSize: '18px', opacity: isUnlocked ? 1 : 0.5 }}>
+                                {isUnlocked ? '🌍' : '🔒'}
+                            </span>
+                            <span>
+                                建筑朝圣之旅
+                            </span>
+
+                            {isUnlocked && state.atlas?.currentExpedition && (
+                                <span style={{
+                                    background: '#DBEAFE',
+                                    borderRadius: '10px',
+                                    padding: '2px 6px',
+                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '12px',
+                                    marginLeft: '4px'
+                                }}>
+                                    ✈️
+                                </span>
+                            )}
+
+                            {!isUnlocked && (
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '50%', right: '16px',
+                                    transform: 'translateY(-50%)',
+                                    background: '#E5E7EB',
+                                    color: '#6B7280',
+                                    fontSize: '12px',
+                                    padding: '4px 8px',
+                                    borderRadius: '12px',
+                                    fontWeight: '700'
+                                }}>大二解锁</span>
+                            )}
+                        </button>
+                    );
+                })()}
+
                 {/* 毕业分流选项 (栅格布局，一排两列) */}
                 <div style={{
                     display: 'grid',

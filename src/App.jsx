@@ -24,6 +24,7 @@ import InternScreen from './components/InternScreen';
 import CareerScreen from './components/CareerScreen';
 import ExamGradScreen from './components/ExamGradScreen';
 import ExamCivilScreen from './components/ExamCivilScreen';
+import AtlasScreen from './components/AtlasScreen';
 import SpotlightTour from './components/SpotlightTour';
 import './App.css';
 
@@ -107,6 +108,7 @@ function GameContent() {
       {screen === 'jobSearch' && <div className="main-stage"><CareerScreen /></div>}
       {screen === 'examGrad' && <div className="main-stage"><ExamGradScreen /></div>}
       {screen === 'examCivil' && <div className="main-stage"><ExamCivilScreen /></div>}
+      {screen === 'atlas' && <div className="main-stage"><AtlasScreen /></div>}
 
       {/* 事件弹窗 */}
       <EventModal />
