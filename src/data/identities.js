@@ -5,7 +5,7 @@ export const schools = {
   elite: {
     id: 'elite',
     name: '建筑老八校',
-    probability: 0.1,
+    probability: 0.15,
     initialDesign: 50,
     initialSoftware: 10,
     initialStress: 40,
@@ -25,7 +25,7 @@ export const schools = {
   regular: {
     id: 'regular',
     name: '普通一本',
-    probability: 0.45,
+    probability: 0.38,
     initialDesign: 30,
     initialSoftware: 2,
     initialStress: 15,
@@ -35,7 +35,7 @@ export const schools = {
   vocational: {
     id: 'vocational',
     name: '普通大专',
-    probability: 0.2,
+    probability: 0.22,
     initialDesign: 20,
     initialSoftware: 0,
     initialStress: 10,
@@ -49,7 +49,7 @@ export const families = {
   academic: {
     id: 'academic',
     name: '院士/泰斗子女',
-    probability: 0.10,
+    probability: 0.15,
     initialMoney: 12000,
     designBonus: 15,
     softwareBonus: 25,
@@ -66,7 +66,7 @@ export const families = {
   wealthy: {
     id: 'wealthy',
     name: '富二代',
-    probability: 0.20,
+    probability: 0.22,
     initialMoney: 20000,
     designBonus: 10,
     softwareBonus: 20,
@@ -75,15 +75,15 @@ export const families = {
     skill: {
       id: 'moneyPower',
       name: '钞能力代做',
-      description: '花费¥5,000雇佣校外枪手，进度增加30%',
-      effect: { progress: 30, moneyCost: 5000 },
+      description: '花费¥3,000雇佣校外枪手，进度增加30%',
+      effect: { progress: 30, moneyCost: 3000 },
       cooldown: 8
     }
   },
   middle: {
     id: 'middle',
     name: '普通家庭',
-    probability: 0.4,
+    probability: 0.35,
     initialMoney: 4000,
     designBonus: 5,
     softwareBonus: 35,
@@ -100,7 +100,7 @@ export const families = {
   poor: {
     id: 'poor',
     name: '穷困家庭',
-    probability: 0.3,
+    probability: 0.28,
     initialMoney: 800,
     designBonus: 5,
     softwareBonus: 30,
@@ -214,17 +214,29 @@ export function drawFamily() {
   return families.middle; // 默认返回普通家庭
 }
 
-// 生成完整身份
-export function generateIdentity() {
-  const school = drawSchool();
-  const family = drawFamily();
-  const narrativeKey = `${school.id}-${family.id}`;
+// 生成完整身份（支持排除已抽到的组合数组，避免重复）
+export function generateIdentity(excludeKeys = []) {
+  // 兼容旧调用：如果传入字符串则包装为数组
+  const excludeSet = new Set(
+    Array.isArray(excludeKeys) ? excludeKeys : (excludeKeys ? [excludeKeys] : [])
+  );
+
+  let school, family, narrativeKey;
+  let attempts = 0;
+  do {
+    school = drawSchool();
+    family = drawFamily();
+    narrativeKey = `${school.id}-${family.id}`;
+    attempts++;
+  } while (excludeSet.size > 0 && excludeSet.has(narrativeKey) && attempts < 50);
+
   const narrative = identityNarratives[narrativeKey];
 
   return {
     school,
     family,
     narrative,
+    identityKey: narrativeKey,
     initialAttributes: {
       design: school.initialDesign + (family.designBonus || 0),
       software: school.initialSoftware + (family.softwareBonus || 0),

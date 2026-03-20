@@ -3,11 +3,15 @@ import { useGame } from '../logic/gameState';
 import ArchivesModal from './ArchivesModal';
 import { tutorialData } from '../data/tutorialData';
 import ReactMarkdown from 'react-markdown';
+import SaveManager from '../utils/saveManager';
+import { calculateTotalScore } from '../utils/scoreCalculator';
+import LeaderboardModal from './LeaderboardModal';
 
 export default function SettingsModal({ onClose }) {
-    const { dispatch } = useGame();
+    const { dispatch, state } = useGame();
     // panel 类型: 'menu' | 'desc' | 'about' | 'archives' | 'restart'
     const [panel, setPanel] = useState('menu');
+    const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'success' | 'error'
 
     // 重新开启指引
     const handleReTutorial = () => {
@@ -19,6 +23,29 @@ export default function SettingsModal({ onClose }) {
     const handleHardReset = () => {
         dispatch({ type: 'HARD_RESET_GAME' });
         onClose(); // 由于游戏重启可能也会干掉该组件挂载，这里确保UI安全
+    };
+
+    // 云端存档
+    const handleCloudSave = async () => {
+        const playerName = SaveManager.getPlayerName();
+        if (!playerName) {
+            setSaveStatus('error');
+            return;
+        }
+        setSaveStatus('saving');
+        try {
+            const { totalScore } = calculateTotalScore();
+            const result = await SaveManager.save(playerName, state, totalScore);
+            if (result.success) {
+                SaveManager.markCloudSave();
+                setSaveStatus('success');
+            } else {
+                setSaveStatus('error');
+            }
+        } catch (e) {
+            setSaveStatus('error');
+        }
+        setTimeout(() => setSaveStatus(null), 3000);
     };
 
     const GameDesc = () => (
@@ -36,19 +63,32 @@ export default function SettingsModal({ onClose }) {
                     </ReactMarkdown>
                 </div>
             ))}
+            <h4 style={{ color: '#475569', margin: '16px 0 8px' }}>🎯 结局与设置</h4>
+            <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                <li>通过你在 60 周内的决定与属性，达成多种不同结局。</li>
+                <li>可以在设置里点击**保存进度到云端**，随时上传你的当前进度；或点击**玩家排行榜**查看全服排名。</li>
+                <li>每次通关后，结局和成就将被收录在**档案馆**中。</li>
+            </ul>
         </div>
     );
 
     const AboutContent = () => (
         <div style={{ textAlign: 'left', lineHeight: '1.8', fontSize: '15px', color: '#334155' }}>
             <h3 style={{ margin: '0 0 16px', color: '#1E293B', fontWeight: '800' }}>ℹ️ 作者的话</h3>
-            <p style={{ fontStyle: 'italic', marginBottom: '24px' }}>
-                "这是一部由您与您的专属AI架构师共同倾注心血熔铸而成的生存模拟器。它献给所有在图纸、参数化与无尽熬夜中挣扎跋涉的建筑学子们。"
+            <p style={{ fontStyle: 'italic', marginBottom: '16px' }}>
+                "献给所有为建筑学熬过夜的建筑学子们。🌙"
+            </p>
+            <p style={{ marginBottom: '16px' }}>
+                我开发这款游戏的初衷其实非常简单：希望能在这枯燥、甚至时不时让人头秃抓狂的学习生活里，给大家提供一点额外的乐趣！💻✨ 如果在游玩的过程中，你能暂时抛开现实中熬夜画图的焦虑，狠狠体验一把“爽文”般的人生，或者只是看着那些熟悉的梗忍不住会心一笑，那我的心血就没有白费。🎉
+            </p>
+            <p style={{ marginBottom: '24px' }}>
+                因为这是我个人的独立开发作品，游戏里难免会有不少不成熟或是考虑不周全的地方，希望大家能多多包涵。🙏 如果你觉得这款小游戏还挺好玩，真心希望你能把它推荐给身边的同学们，或者在互联网上分享给更多的人。🚀
             </p>
             <p>
-                <strong>协同开发：</strong>玩家总监 与 Antigravity 系统终端<br />
-                <strong>致谢：</strong>感谢建筑学教会了我们在极限压榨中如何做一名无休无眠的工程师。<br />
-                <strong>版本：</strong>v1.2 (视觉重构版)
+                <strong>致谢：</strong><br />
+                感谢所有在游戏开发过程中给予我支持与肯定的人，包括但不限于我的家人、好朋友和老师们。💕<br />
+                没有你们的鼓励与肯定，我一定无法坚持“肝”完这款游戏的开发，你们同样也是这款游戏的重要创作者！<br /><br />
+                <strong>版本：</strong> v1.0 正式版
             </p>
         </div>
     );
@@ -100,17 +140,38 @@ export default function SettingsModal({ onClose }) {
                     {/* 主菜单 */}
                     {panel === 'menu' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, justifyContent: 'center' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                                <button onClick={() => setPanel('desc')} style={{ padding: '20px 8px', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '16px', whiteSpace: 'nowrap', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>📝 游戏说明</button>
-                                <button onClick={handleReTutorial} style={{ padding: '20px 8px', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '16px', whiteSpace: 'nowrap', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>🎓 新手指引</button>
-                                <button onClick={() => setPanel('about')} style={{ padding: '20px 8px', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '16px', whiteSpace: 'nowrap', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>ℹ️ 作者的话</button>
-                            </div>
-
-                            <button onClick={() => setPanel('archives')} style={{ padding: '20px', background: '#F0FDF4', border: '2px solid #BBF7D0', borderRadius: '16px', color: '#166534', fontWeight: '800', cursor: 'pointer', fontSize: '18px', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#DCFCE7'} onMouseOut={e => e.currentTarget.style.background = '#F0FDF4'}>
-                                🏛️ 档案馆：我的一百种人生
+                            {/* 云端存档按钮 */}
+                            <button onClick={handleCloudSave} disabled={saveStatus === 'saving'} style={{
+                                height: '60px', padding: '0', border: '2px solid #c7d2fe',
+                                borderRadius: '16px', fontWeight: '800', cursor: 'pointer',
+                                fontSize: '16px', transition: 'all 0.2s', whiteSpace: 'nowrap',
+                                background: saveStatus === 'success' ? '#F0FDF4' : saveStatus === 'error' ? '#FEF2F2' : '#EEF2FF',
+                                color: saveStatus === 'success' ? '#166534' : saveStatus === 'error' ? '#DC2626' : '#4338CA',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                {saveStatus === 'saving' ? '☕ 正在保存...' :
+                                 saveStatus === 'success' ? '✅ 存档保存成功！' :
+                                 saveStatus === 'error' ? '❌ 保存失败，请重试' :
+                                 '☁️ 保存进度到云端'}
                             </button>
 
-                            <button onClick={() => setPanel('restart')} style={{ padding: '20px', background: '#FEF2F2', border: '2px solid #FECACA', borderRadius: '16px', color: '#DC2626', fontWeight: '800', cursor: 'pointer', fontSize: '18px', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#FEE2E2'} onMouseOut={e => e.currentTarget.style.background = '#FEF2F2'}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                                <button onClick={() => setPanel('desc')} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>📝 游戏说明</button>
+                                <button onClick={handleReTutorial} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>🎓 新手指引</button>
+                                <button onClick={() => setPanel('about')} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>ℹ️ 作者的话</button>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <button onClick={() => setPanel('archives')} style={{ height: '60px', padding: '0', background: '#F0FDF4', border: '2px solid #BBF7D0', borderRadius: '16px', color: '#166534', fontWeight: '800', cursor: 'pointer', fontSize: '14px', transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#DCFCE7'} onMouseOut={e => e.currentTarget.style.background = '#F0FDF4'}>
+                                    🏛️ 档案馆：我的一百种人生
+                                </button>
+                                
+                                <button onClick={() => setPanel('leaderboard')} style={{ height: '60px', padding: '0', background: '#FFF7ED', border: '2px solid #FED7AA', borderRadius: '16px', color: '#C2410C', fontWeight: '800', cursor: 'pointer', fontSize: '15px', transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#FFEDD5'} onMouseOut={e => e.currentTarget.style.background = '#FFF7ED'}>
+                                    🏆 玩家排行榜
+                                </button>
+                            </div>
+
+                            <button onClick={() => setPanel('restart')} style={{ height: '60px', padding: '0', background: '#FEF2F2', border: '2px solid #FECACA', borderRadius: '16px', color: '#DC2626', fontWeight: '800', cursor: 'pointer', fontSize: '16px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }} onMouseOver={e => e.currentTarget.style.background = '#FEE2E2'} onMouseOut={e => e.currentTarget.style.background = '#FEF2F2'}>
                                 🚪 放弃学业重新开始
                             </button>
                         </div>
@@ -134,6 +195,9 @@ export default function SettingsModal({ onClose }) {
             {/* 如果档案馆由于面板挂载也用的是独立视窗，需要在此拦截渲染 */}
             {panel === 'archives' && (
                 <ArchivesModal onClose={() => setPanel('menu')} />
+            )}
+            {panel === 'leaderboard' && (
+                <LeaderboardModal onClose={() => setPanel('menu')} />
             )}
         </div>
     );

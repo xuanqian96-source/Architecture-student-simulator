@@ -1,9 +1,12 @@
 // 初始化界面 - 含身份抽取系统
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../logic/gameState';
 import { generateIdentity } from '../data/identities';
 import ArchivesModal from './ArchivesModal';
+import LeaderboardModal from './LeaderboardModal';
+import { checkIdentityAchievements } from '../data/achievements';
+import SaveManager from '../utils/saveManager';
 
 // ── 稀有度工具函数 ──────────────────────────────────────────────────────────
 // 概率 = school.probability × family.probability
@@ -13,10 +16,10 @@ import ArchivesModal from './ArchivesModal';
 // else     → 普通
 export function getRarity(school, family) {
     const p = (school?.probability ?? 0.45) * (family?.probability ?? 0.6);
-    if (p < 0.008) return 'legendary';
-    if (p < 0.025) return 'epic';
-    if (p < 0.09) return 'rare';
-    return 'normal';
+    if (p < 0.025) return 'legendary';  // ≈ 1种组合（建筑皇族 2.25%）
+    if (p < 0.05) return 'epic';        // ≈ 5种组合
+    if (p < 0.10) return 'rare';        // ≈ 8种组合
+    return 'normal';                    // ≈ 2种组合
 }
 
 const RARITY = {
@@ -69,7 +72,16 @@ export default function InitScreen() {
     const [cardFlipped, setCardFlipped] = useState(false);
     const [rarity, setRarity] = useState(null);
     const [drawCount, setDrawCount] = useState(0); // 抽取次数记录
+    const [drawnKeys, setDrawnKeys] = useState([]); // 已抽到的身份组合key，用于排除重复
     const [showArchives, setShowArchives] = useState(false);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+    // 玩家名相关
+    const [nameInput, setNameInput] = useState('');
+    const [hasName, setHasName] = useState(SaveManager.hasPlayerName());
+    const [playerName, setPlayerName] = useState(SaveManager.getPlayerName());
+    // 云端存档相关
+    const [hasCloudSave, setHasCloudSave] = useState(false);
+    const [loadingSave, setLoadingSave] = useState(false);
     const MAX_DRAWS = 3;
 
     if (!gameContext) {
@@ -77,13 +89,51 @@ export default function InitScreen() {
     }
     const { dispatch, ActionTypes } = gameContext;
 
+    // 已有玩家名时，检查是否有云端存档
+    useEffect(() => {
+        if (hasName && playerName) {
+            SaveManager.load(playerName).then(result => {
+                if (result.success && result.data?.saveData && Object.keys(result.data.saveData).length > 0) {
+                    setHasCloudSave(true);
+                }
+            }).catch(() => {});
+        }
+    }, [hasName, playerName]);
+
+    // 确认玩家名
+    const handleConfirmName = () => {
+        const name = nameInput.trim();
+        if (name.length < 2 || name.length > 12) return;
+        SaveManager.setPlayerName(name);
+        setPlayerName(name);
+        setHasName(true);
+        // 在后端创建空记录
+        SaveManager.save(name, {}, 0).catch(() => {});
+    };
+
+    // 加载云端存档
+    const handleLoadSave = async () => {
+        setLoadingSave(true);
+        try {
+            const result = await SaveManager.load(playerName);
+            if (result.success && result.data?.saveData) {
+                dispatch({ type: 'LOAD_CLOUD_SAVE', payload: { saveData: result.data.saveData } });
+            }
+        } catch (e) {
+            console.error('加载存档失败:', e);
+        }
+        setLoadingSave(false);
+    };
+
     const handleDraw = () => {
         // 第一抽不计入3次重抽次数；如果是由于重抽按钮点击，则增加次数
         if (phase === 'result' && drawCount < MAX_DRAWS) {
             setDrawCount(prev => prev + 1);
         }
 
-        const drawn = generateIdentity();
+        // 重抽时排除所有已抽过的身份，保证每次抽到新组合
+        const drawn = generateIdentity(drawnKeys);
+        setDrawnKeys(prev => [...prev, drawn.identityKey]);
         const r = getRarity(drawn.school, drawn.family);
         setIdentity(drawn);
         setRarity(r);
@@ -94,6 +144,8 @@ export default function InitScreen() {
     };
 
     const handleStartGame = () => {
+        // 身份抽卡成就检测
+        checkIdentityAchievements(rarity, drawCount);
         dispatch({ type: ActionTypes.INIT_GAME, payload: { identity } });
     };
 
@@ -149,6 +201,67 @@ export default function InitScreen() {
                 textAlign: 'center',
             }}>
 
+                {/* ── 阶段 0：玩家名称设置 ── */}
+                {!hasName && phase === 'intro' && (
+                    <div style={{
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                        backdropFilter: 'blur(6px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 10000
+                    }}>
+                        <div style={{
+                            background: 'white', borderRadius: '24px', padding: '36px',
+                            maxWidth: '420px', width: '90%',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)', textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '48px', marginBottom: '12px' }}>✏️</div>
+                            <h2 style={{ fontSize: '22px', fontWeight: '900', color: '#1E293B', margin: '0 0 8px' }}>
+                                给自己起个名字吧
+                            </h2>
+                            <p style={{ fontSize: '14px', color: '#64748B', margin: '0 0 24px' }}>
+                                这个名字将伴随你的建筑学生涯
+                            </p>
+                            <input
+                                type="text"
+                                value={nameInput}
+                                onChange={e => setNameInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleConfirmName()}
+                                placeholder="请输入你的游戏昵称"
+                                maxLength={12}
+                                style={{
+                                    width: '100%', padding: '14px 16px',
+                                    border: '2px solid #E2E8F0', borderRadius: '12px',
+                                    fontSize: '16px', fontWeight: '600',
+                                    textAlign: 'center', outline: 'none',
+                                    transition: 'border-color 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                                onFocus={e => e.target.style.borderColor = '#667eea'}
+                                onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+                            />
+                            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '8px 0 20px' }}>
+                                2-12 个字符
+                            </p>
+                            <button
+                                onClick={handleConfirmName}
+                                disabled={nameInput.trim().length < 2}
+                                style={{
+                                    width: '100%', padding: '14px',
+                                    background: nameInput.trim().length >= 2
+                                        ? 'linear-gradient(135deg, #667eea, #764ba2)' : '#E2E8F0',
+                                    color: nameInput.trim().length >= 2 ? 'white' : '#94A3B8',
+                                    border: 'none', borderRadius: '12px',
+                                    fontSize: '16px', fontWeight: '700',
+                                    cursor: nameInput.trim().length >= 2 ? 'pointer' : 'not-allowed',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                确认并开始
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── 阶段 1：简介 ── */}
                 {phase === 'intro' && <>
                     <h1 style={{ fontSize: '46px', fontWeight: '900', color: '#667eea', marginBottom: '8px', textAlign: 'center' }}>
@@ -158,7 +271,7 @@ export default function InitScreen() {
 
                     <div style={{ background: '#F8FAFC', borderRadius: '16px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
                         <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-                            <p style={{ marginBottom: '12px', fontSize: '15px' }}><strong>嘿，准建筑师。</strong></p>
+                            <p style={{ marginBottom: '12px', fontSize: '15px' }}><strong>嘿，{playerName || '准建筑师'}，准建筑师。</strong></p>
                             <p style={{ marginBottom: '16px' }}>这里没有普利兹克奖的红地毯，只有拉不完的线条和喝不完的红牛。<br />在《建筑生模拟器》中，你将开启一段为期五年的“非人”生活：</p>
 
                             <div style={{ display: 'inline-block', textAlign: 'left', margin: '0 auto' }}>
@@ -191,17 +304,32 @@ export default function InitScreen() {
                         </p>
                     </div>
 
+                    {/* 继续游戏按钮（仅有云端存档时显示） */}
+                    {hasCloudSave && (
+                        <button onClick={handleLoadSave} disabled={loadingSave} className="draw-btn" style={{
+                            width: '100%', padding: '17px', marginBottom: '12px',
+                            background: 'linear-gradient(135deg, #10B981, #059669)',
+                            color: 'white', border: 'none', borderRadius: '12px',
+                            fontSize: '19px', fontWeight: '700', cursor: loadingSave ? 'wait' : 'pointer',
+                        }}>
+                            {loadingSave ? '☕ 正在加载存档...' : '☁️ 继续游戏'}
+                        </button>
+                    )}
+
                     <button onClick={handleDraw} className="draw-btn" style={{
                         width: '100%', padding: '17px',
                         background: 'linear-gradient(135deg,#667eea,#764ba2)',
                         color: 'white', border: 'none', borderRadius: '12px',
                         fontSize: '19px', fontWeight: '700', cursor: 'pointer',
-                        animation: 'pulse 2s infinite'
+                        animation: hasCloudSave ? 'none' : 'pulse 2s infinite'
                     }}>
-                        🎲 抽取身份
+                        🎲 {hasCloudSave ? '开启新游戏' : '开始游戏'}
                     </button>
                     <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '18px', textAlign: 'center' }}>
                         v1.0 Final Edition | Made with ❤️ for Architecture Students
+                    </p>
+                    <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px', textAlign: 'center' }}>
+                        粤公网安备44010602015390号
                     </p>
                 </>}
 
@@ -374,7 +502,7 @@ export default function InitScreen() {
             </div>
 
             {/* 顶层绝对定位的快捷设置与档案馆入口 */}
-            {phase === 'intro' && (
+            {phase === 'intro' && (<>
                 <div style={{ position: 'fixed', bottom: '24px', right: '32px', zIndex: 100 }}>
                     <button
                         onClick={() => setShowArchives(true)}
@@ -401,10 +529,39 @@ export default function InitScreen() {
                         档案馆：我的一百种人生
                     </button>
                 </div>
-            )}
+
+                {/* 排行榜按钮（左下角） */}
+                <div style={{ position: 'fixed', bottom: '24px', left: '32px', zIndex: 100 }}>
+                    <button
+                        onClick={() => setShowLeaderboard(true)}
+                        style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255,255,255,0.3)',
+                            padding: '12px 20px',
+                            borderRadius: '16px',
+                            color: 'white',
+                            fontWeight: '800',
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                    >
+                        <span style={{ fontSize: '20px' }}>🏆</span>
+                        玩家排行榜
+                    </button>
+                </div>
+            </>)}
 
             {/* 档案馆模态窗 */}
             {showArchives && <ArchivesModal onClose={() => setShowArchives(false)} />}
+            {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
         </div>
     );
 }

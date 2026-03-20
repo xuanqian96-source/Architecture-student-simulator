@@ -8,7 +8,7 @@ export const choiceEvents = [
         options: [
             {
                 text: '参加',
-                effects: { stress: 20, money: -500, design: 5 }
+                effects: { stress: 20, money: -500, design: 3 }
             },
             {
                 text: '拒绝',
@@ -23,7 +23,7 @@ export const choiceEvents = [
         options: [
             {
                 text: '更新',
-                effects: { software: 5, progress: -10 }
+                effects: { software: 3, progress: -10 }
             },
             {
                 text: '不更',
@@ -113,7 +113,7 @@ export const choiceEvents = [
         options: [
             {
                 text: '安装',
-                effects: { random: true, success: { software: 10 }, fail: { stress: 20 } }
+                effects: { random: true, success: { software: 3 }, fail: { stress: 20 } }
             },
             {
                 text: '放弃',
@@ -173,7 +173,7 @@ export const choiceEvents = [
         options: [
             {
                 text: '去',
-                effects: { money: 2000, design: 10, stress: 20 }
+                effects: { money: 2000, design: 3, stress: 20 }
             },
             {
                 text: '留校',
@@ -233,11 +233,11 @@ export const choiceEvents = [
         options: [
             {
                 text: '评论课',
-                effects: { design: 5 }
+                effects: { design: 3 }
             },
             {
                 text: '构造课',
-                effects: { software: 5 }
+                effects: { software: 3 }
             }
         ]
     },

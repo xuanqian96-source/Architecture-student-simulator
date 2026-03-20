@@ -98,27 +98,11 @@ export default function CareerScreen() {
                 </button>
             </div>
 
-            {/* 入职印章 */}
             {hasInternedThisYear && path === 'internship' && (
-                <div style={{ position: 'relative', padding: '20px', background: '#FFF7ED', borderRadius: '16px', marginBottom: '24px', border: '2px solid #FDBA74', textAlign: 'center' }}>
-                    <div style={{
-                        display: 'inline-block',
-                        border: '4px solid #DC2626',
-                        borderRadius: '12px',
-                        padding: '8px 24px',
-                        transform: 'rotate(-12deg)',
-                        color: '#DC2626',
-                        fontWeight: '900',
-                        fontSize: '22px',
-                        letterSpacing: '4px',
-                        opacity: 0.85,
-                        marginBottom: '12px',
-                    }}>
-                        已入职·{state.currentIntern?.name}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#9A3412', fontWeight: '600' }}>
-                        本学年实习岗已确定，每周压力+{INTERN_WEEKLY_STRESS}。下一学年可重新选择。
-                    </div>
+                <div style={{ padding: '10px 20px', background: '#FEF9EE', borderRadius: '12px', marginBottom: '20px', border: '1px solid #FDBA74', textAlign: 'center', fontSize: '13px', color: '#92400E', fontWeight: '700' }}>
+                    本学年已入职「{state.currentIntern?.name}」，每周压力+{INTERN_WEEKLY_STRESS}，
+                    {(() => { const intern = internships.find(i => i.id === (state.currentIntern?.id || state.currentIntern)); return intern?.salary > 0 ? `周薪 ¥${intern.salary}` : intern?.salary < 0 ? `花费 ¥${Math.abs(intern.salary)}/周` : '无薪资'; })()}。
+                    下一学年可重新选择。
                 </div>
             )}
 
@@ -156,16 +140,66 @@ export default function CareerScreen() {
                                 {intern.requirements.stressBelow && <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}><span>当前压力:</span><span style={{ color: state.attributes.stress <= intern.requirements.stressBelow ? '#10B981' : '#EF4444' }}>&lt; {intern.requirements.stressBelow}</span></div>}
                             </div>
 
+                            {/* 已入职的卡片右上角红色圆形公章 */}
+                            {hasInternedThisYear && (state.currentIntern?.id === intern.id || state.currentIntern === intern.id) && (
+                                <div style={{
+                                    position: 'absolute', top: '4px', right: '4px',
+                                    width: '90px', height: '90px',
+                                    transform: 'rotate(-18deg)',
+                                    zIndex: 2,
+                                    pointerEvents: 'none',
+                                }}>
+                                    <svg viewBox="0 0 100 100" width="100%" height="100%">
+                                        <defs>
+                                            {/* 斑驳印痕滤镜 */}
+                                            <filter id={`distress-${intern.id}`}>
+                                                <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" result="noise" />
+                                                <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 4.5 -2" in="noise" result="coloredNoise" />
+                                                <feComposite operator="out" in="SourceGraphic" in2="coloredNoise" />
+                                            </filter>
+                                        </defs>
+                                        
+                                        <g filter={`url(#distress-${intern.id})`}>
+                                            {/* 外层粗边框和内层细边框 */}
+                                            <circle cx="50" cy="50" r="46" fill="none" stroke="#DC2626" strokeWidth="4" />
+                                            <circle cx="50" cy="50" r="40" fill="none" stroke="#DC2626" strokeWidth="1" />
+                                            
+                                            {/* 中心位置的主体文字 */}
+                                            <text x="50" y="55" fill="#DC2626" fontSize="24" fontWeight="900" fontFamily='"STKaiti", "Kaiti", serif' textAnchor="middle" letterSpacing="2">
+                                                入职中
+                                            </text>
+                                            
+                                            {/* 顶部环绕修饰文字 */}
+                                            <path id={`curve-${intern.id}`} d="M 12 50 A 38 38 0 1 1 88 50" fill="none" />
+                                            <text fill="#DC2626" fontSize="10" fontWeight="bold" fontFamily='Arial' letterSpacing="2">
+                                                <textPath href={`#curve-${intern.id}`} startOffset="50%" textAnchor="middle">
+                                                    ★ ARCHITECTURE ★
+                                                </textPath>
+                                            </text>
+                                            
+                                            {/* 底部编码/拼音 */}
+                                            <text x="50" y="80" fill="#DC2626" fontSize="8" fontWeight="bold" fontFamily='Arial' textAnchor="middle" letterSpacing="1">
+                                                HIRED
+                                            </text>
+                                        </g>
+                                    </svg>
+                                </div>
+                            )}
+
                             <button
                                 disabled={!isEligible || hasInternedThisYear}
                                 onClick={() => handleTakeIntern(intern)}
                                 style={{
-                                    background: isEligible && !hasInternedThisYear ? (isArch ? '#3B82F6' : '#8B5CF6') : '#CBD5E1',
+                                    background: (hasInternedThisYear && (state.currentIntern?.id === intern.id || state.currentIntern === intern.id))
+                                        ? '#CBD5E1'
+                                        : (isEligible && !hasInternedThisYear ? (isArch ? '#3B82F6' : '#8B5CF6') : '#CBD5E1'),
                                     color: 'white', border: 'none', padding: '12px', borderRadius: '8px',
                                     fontWeight: 'bold', cursor: (isEligible && !hasInternedThisYear) ? 'pointer' : 'not-allowed', width: '100%'
                                 }}
                             >
-                                {isEligible ? '投递简历并入职' : '能力不匹配'}
+                                {(hasInternedThisYear && (state.currentIntern?.id === intern.id || state.currentIntern === intern.id))
+                                    ? '已入职'
+                                    : (isEligible ? '投递简历并入职' : '能力不匹配')}
                             </button>
                         </div>
                     );

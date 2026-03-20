@@ -1,17 +1,20 @@
-// 结局界面
-
 import React from 'react';
 import { useGame } from '../logic/gameState';
-import { saveEndingRecord } from '../data/endings';
+import { saveEndingRecord, getEndingRecord, getEndingCounts } from '../data/endings';
+import { checkEndingAchievements } from '../data/achievements';
 
 export default function EndingScreen() {
     const { state, dispatch } = useGame();
     const { ending } = state.ui;
 
-    // 当最终展示结局时持久化记录徽章
+    // 当最终展示结局时持久化记录徽章 + 检测成就
     React.useEffect(() => {
         if (ending && ending.id) {
             saveEndingRecord(ending.id);
+            // 成就检测（在 saveEndingRecord 之后执行，确保 counts 已更新）
+            const unlockedIds = getEndingRecord();
+            const counts = getEndingCounts();
+            checkEndingAchievements(ending.id, ending.type, state, unlockedIds, counts);
         }
     }, [ending]);
 

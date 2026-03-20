@@ -1,0 +1,15 @@
+{
+  "name": "arc-student-simulator-server",
+  "version": "1.0.0",
+  "description": "建筑系模拟器 - 后端存档与排行榜服务",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "better-sqlite3": "^11.0.0"
+  }
+}

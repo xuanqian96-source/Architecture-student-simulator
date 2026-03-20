@@ -153,7 +153,7 @@ function generateGameTip(week, year, state) {
                 type: 'intern',
                 title: '💡 实习推荐',
                 icon: '🤝',
-                message: '你的简历已经够格投递实习了！点击左下角「实习与工作」查看可投递的岗位。好机会不等人，快去投递吧！'
+                message: '你的属性能力值已经够格投递实习了！点击左下角「实习与工作」查看可投递的岗位。好机会不等人，快去投递吧！'
             };
         } else {
             return null; // 无可投递实习，不弹提醒
@@ -218,7 +218,7 @@ function gameReducer(state, action) {
             let tempWeights = { ...state.tutorWeights };
             const usedIds = new Set();
             for (let i = 0; i < 3; i++) {
-                const candidate = drawTutor(tempWeights, []);
+                const candidate = drawTutor(tempWeights, [], 1);
                 candidates.push(candidate);
                 usedIds.add(candidate.id);
                 // 临时降权避免重复出现在候选列表
@@ -279,7 +279,9 @@ function gameReducer(state, action) {
                     const progressIncr = Math.floor(5 + (state.attributes.software * 0.1));
                     newState.currentProject.progress += progressIncr;
                     newState.attributes.stress += 8;
-                    logMessage = addTimestamp(`通宵画图: 进度+${progressIncr}, 压力+8`);
+                    const softwareGainAllNight = applyLearningDecay(state.attributes.software, 0.5);
+                    newState.attributes.software += softwareGainAllNight;
+                    logMessage = addTimestamp(`通宵画图: 进度+${progressIncr}, 压力+8, 软件+${softwareGainAllNight.toFixed(1)}`);
                     break;
 
                 case 'polish': { // 方案推敲
@@ -608,7 +610,7 @@ function gameReducer(state, action) {
                 let tempWeights = { ...state.tutorWeights };
                 const usedIds = new Set();
                 for (let i = 0; i < 3; i++) {
-                    const candidate = drawTutor(tempWeights, state.chosenTutorIds || []);
+                    const candidate = drawTutor(tempWeights, state.chosenTutorIds || [], nextYear);
                     candidates.push(candidate);
                     usedIds.add(candidate.id);
                     // 临时降权避免重复出现在候选列表
@@ -705,11 +707,7 @@ function gameReducer(state, action) {
                 newState.attributes.money += state.identity.family.monthlyAllowance;
                 logs.push(addTimestamp(`收到生活费+¥${state.identity.family.monthlyAllowance}`));
             }
-            // 新学年第一周也发放生活费（第一年第一周除外）
-            if (nextWeek === 1 && nextYear !== 1 && nextYear !== currentYear) {
-                newState.attributes.money += state.identity.family.monthlyAllowance;
-                logs.push(addTimestamp(`新学年生活费+¥${state.identity.family.monthlyAllowance}`));
-            }
+            // (新学年生活费已移至 DRAW_TUTOR handler 中发放，确保在W1时就到账)
 
 
 
@@ -1143,15 +1141,21 @@ ${modelOption.description}
 
         case 'START_EXPEDITION': {
             const { buildingId, cost, weeks } = action.payload;
+            const newAttrs = {
+                ...state.attributes,
+                money: state.attributes.money - cost
+            };
+            const newExpState = { ...state, attributes: newAttrs };
             return {
                 ...state,
-                attributes: {
-                    ...state.attributes,
-                    money: state.attributes.money - cost
-                },
+                attributes: newAttrs,
                 atlas: {
                     ...state.atlas,
                     currentExpedition: { buildingId, weeksLeft: weeks }
+                },
+                ui: {
+                    ...state.ui,
+                    moneyWarning: checkMoneyWarning(newExpState)
                 }
             };
         }
@@ -1299,8 +1303,33 @@ ${modelOption.description}
                 totalWeeks: state.progress.totalWeeks
             };
 
+            // 大二刚选完导师后，弹出建筑朝圣之旅解锁提示
+            const atlasTip = (pending.nextYear === 2 && !pending.isFirstSemester) ? {
+                type: 'atlas_unlock',
+                title: '🌍 建筑朝圣之旅已解锁！',
+                icon: '✈️',
+                message: '恭喜你踏入大二！全球12座殿堂级建筑正等待你前往朝圣。点击左侧「建筑朝圣之旅」开启探索之旅，点亮图鉴获取属性加成与作品集加分！'
+            } : null;
+
+            // 大五刚选完导师后，弹出毕业季提醒
+            const year5Tip = (pending.nextYear === 5 && !pending.isFirstSemester) ? {
+                type: 'year5_final',
+                title: '🎓 最后一年，何去何从？',
+                icon: '🎓',
+                message: '欢迎来到大五——你的建筑学生涯最后一年。从现在起，以下毕业通道已全部开放：保研复试、出国留学投递、研究生统考、公务员考试、以及秋季招聘求职。你可以在左下角的对应入口中选择自己的命运，也可以什么都不做，以一个普通毕业生的身份默默离场。无论你选择哪条路，祝你好运，建筑人。'
+            } : null;
+
+            // 新学年生活费发放（大二及以后，选完导师即刻到账，对应W1）
+            const newAttributes = !pending.isFirstSemester && pending.nextYear >= 2
+                ? { ...state.attributes, money: state.attributes.money + state.identity.family.monthlyAllowance }
+                : { ...state.attributes };
+            if (!pending.isFirstSemester && pending.nextYear >= 2) {
+                newLogsBase.push(addTimestamp(`新学年生活费+¥${state.identity.family.monthlyAllowance}`));
+            }
+
             return {
                 ...state,
+                attributes: newAttributes,
                 currentProject: pending.newProject,
                 pendingNewSemester: null,
                 tutor: chosenTutor,
@@ -1324,6 +1353,7 @@ ${modelOption.description}
                 progress: newProgress,
                 weeklyActions: { count: 0, limit: 2 },
                 weeklyFlags: { modelShown: false, reviewShown: false, defenseShown: false },
+                gameTip: atlasTip || year5Tip,
                 ui: {
                     ...state.ui,
                     screen: 'game',
@@ -1339,6 +1369,11 @@ ${modelOption.description}
             const { internId, stressPenalty, year } = action.payload;
             const internData = internships.find(i => i.id === internId) || {};
             const internName = internData.name || internId;
+            const salaryString = internData.salary > 0 
+                ? `周薪 ¥${internData.salary}` 
+                : (internData.salary < 0 
+                    ? `花费 ¥${Math.abs(internData.salary)}/周` 
+                    : '无薪资');
             return {
                 ...state,
                 internHistory: [...(state.internHistory || []), { id: internId, year: year || state.progress.year }],
@@ -1346,7 +1381,7 @@ ${modelOption.description}
                 weeklyStressReduction: (state.weeklyStressReduction || 0) - stressPenalty,
                 ui: {
                     ...state.ui,
-                    logs: [...state.ui.logs, addTimestamp(`💼 开始实习: ${internName}, 本年每周压力+${stressPenalty}`)]
+                    logs: [...state.ui.logs, addTimestamp(`💼 本学年已入职「${internName}」，每周压力+${stressPenalty}，${salaryString}。下一学年可重新选择。`)]
                 }
             };
         }
@@ -1443,7 +1478,7 @@ ${modelOption.description}
                 let tempWeights = { ...state.tutorWeights };
                 const usedIds = new Set();
                 for (let i = 0; i < 3; i++) {
-                    const candidate = drawTutor(tempWeights, state.chosenTutorIds || []);
+                    const candidate = drawTutor(tempWeights, state.chosenTutorIds || [], nextYear);
                     candidates.push(candidate);
                     usedIds.add(candidate.id);
                     tempWeights = { ...tempWeights, [candidate.id]: 0 };
@@ -1555,6 +1590,21 @@ ${modelOption.description}
             return {
                 ...state,
                 tutorialShown: true
+            };
+        }
+
+        case 'LOAD_CLOUD_SAVE': {
+            // 从云端存档恢复完整游戏状态
+            const cloudData = action.payload.saveData;
+            if (!cloudData || typeof cloudData !== 'object') return state;
+            return {
+                ...initialState,
+                ...cloudData,
+                ui: {
+                    ...(initialState.ui || {}),
+                    ...(cloudData.ui || {}),
+                    screen: cloudData.ui?.screen || 'game'
+                }
             };
         }
 

@@ -205,8 +205,10 @@ const getWeight = (id, weights) => weights[id] ?? DEFAULT_WEIGHT;
  * @param {string[]} excludeIds - 要排除的导师ID列表（已选过的导师绝不再出现）
  * @returns {Object} 导师对象
  */
-export function drawTutor(weights = {}, excludeIds = []) {
+export function drawTutor(weights = {}, excludeIds = [], year = 1) {
     const excludeSet = new Set(excludeIds);
+    // 院士大三起才可能出现
+    if (year < 3) excludeSet.add('academician');
     const available = tutors.filter(t => !excludeSet.has(t.id));
     if (available.length === 0) return tutors[tutors.length - 1]; // 极端 fallback
 

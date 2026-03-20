@@ -62,20 +62,69 @@ export default function InternScreen() {
 
                             {hasInternedThisYear ? (
                                 (state.currentIntern === intern.id || state.currentIntern?.id === intern.id) ? (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '8px' }}>
+                                    <>
+                                        {/* 右上角红色圆形公章 */}
                                         <div style={{
-                                            transform: 'rotate(-5deg)', color: '#EF4444', border: '3px solid #EF4444',
-                                            borderRadius: '8px', padding: '8px 16px', display: 'inline-block',
-                                            fontSize: '20px', fontWeight: '900', letterSpacing: '1px', background: '#FEF2F2'
+                                            position: 'absolute', top: '4px', right: '4px',
+                                            width: '90px', height: '90px',
+                                            transform: 'rotate(-18deg)',
+                                            zIndex: 2,
+                                            pointerEvents: 'none',
                                         }}>
-                                            已入职·{intern.name}
+                                            <svg viewBox="0 0 100 100" width="100%" height="100%">
+                                                <defs>
+                                                    {/* 斑驳印痕滤镜 */}
+                                                    <filter id={`distress-${intern.id}`}>
+                                                        <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" result="noise" />
+                                                        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 4.5 -2" in="noise" result="coloredNoise" />
+                                                        <feComposite operator="out" in="SourceGraphic" in2="coloredNoise" />
+                                                    </filter>
+                                                </defs>
+                                                
+                                                <g filter={`url(#distress-${intern.id})`}>
+                                                    {/* 外层粗边框和内层细边框 */}
+                                                    <circle cx="50" cy="50" r="46" fill="none" stroke="#DC2626" strokeWidth="4" />
+                                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#DC2626" strokeWidth="1" />
+                                                    
+                                                    {/* 中心位置的主体文字 */}
+                                                    <text x="50" y="55" fill="#DC2626" fontSize="24" fontWeight="900" fontFamily='"STKaiti", "Kaiti", serif' textAnchor="middle" letterSpacing="2">
+                                                        入职中
+                                                    </text>
+                                                    
+                                                    {/* 顶部环绕修饰文字 */}
+                                                    <path id={`curve-${intern.id}`} d="M 12 50 A 38 38 0 1 1 88 50" fill="none" />
+                                                    <text fill="#DC2626" fontSize="10" fontWeight="bold" fontFamily='Arial' letterSpacing="2">
+                                                        <textPath href={`#curve-${intern.id}`} startOffset="50%" textAnchor="middle">
+                                                            ★ ARCHITECTURE ★
+                                                        </textPath>
+                                                    </text>
+                                                    
+                                                    {/* 底部编码/拼音 */}
+                                                    <text x="50" y="80" fill="#DC2626" fontSize="8" fontWeight="bold" fontFamily='Arial' textAnchor="middle" letterSpacing="1">
+                                                        HIRED
+                                                    </text>
+                                                </g>
+                                            </svg>
                                         </div>
-                                        <div style={{ marginTop: '12px', fontSize: '11px', color: '#991B1B', fontWeight: 'bold', textAlign: 'center' }}>
-                                            本学年实习岗已确定，每周压力+{INTERN_WEEKLY_STRESS}
-                                            {intern.salary !== undefined ? `，每周${intern.salary > 0 ? '薪水+' : '贴位费'}${intern.salary}` : ''}。
-                                            <br />下一学年可重新选择。
+                                        {/* 底部简洁薪资说明 */}
+                                        <div style={{
+                                            background: '#FEF9EE', padding: '8px 12px', borderRadius: '8px',
+                                            fontSize: '11px', color: '#92400E', fontWeight: '700', textAlign: 'center',
+                                            marginTop: '4px'
+                                        }}>
+                                            每周压力+{INTERN_WEEKLY_STRESS}，
+                                            {intern.salary > 0 ? `周薪 ¥${intern.salary}` : intern.salary < 0 ? `花费 ¥${Math.abs(intern.salary)}/周` : '无薪资'}
+                                            ，下一学年可重新选择
                                         </div>
-                                    </div>
+                                        {/* 已入职按钮 */}
+                                        <button disabled style={{
+                                            background: '#CBD5E1', color: '#64748B', border: 'none',
+                                            padding: '12px', borderRadius: '8px', fontWeight: 'bold',
+                                            cursor: 'not-allowed', width: '100%', marginTop: '8px'
+                                        }}>
+                                            已入职
+                                        </button>
+                                    </>
                                 ) : (
                                     <div style={{
                                         textAlign: 'center', padding: '12px', borderRadius: '8px',

@@ -211,7 +211,7 @@ export default function EventModal() {
                         borderRadius: '20px', fontSize: '12px', fontWeight: '700',
                         marginBottom: '12px', letterSpacing: '1px'
                     }}>
-                        💡 游戏提示
+                        {tip.type === 'year5_final' ? '🎓 毕业季提醒' : '💡 游戏提示'}
                     </div>
 
                     <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1E293B', marginBottom: '12px' }}>
@@ -228,7 +228,7 @@ export default function EventModal() {
                         color: 'white', border: 'none', borderRadius: '12px',
                         fontSize: '15px', fontWeight: '700', cursor: 'pointer'
                     }}>
-                        我知道了
+                        {tip.type === 'year5_final' ? '我准备好了' : '我知道了'}
                     </button>
                 </div>
             </div>
