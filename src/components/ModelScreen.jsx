@@ -39,7 +39,7 @@ export default function ModelScreen() {
                     </p>
                 </div>
 
-                {money > 0 && money < 200 && (
+                {money > 0 && money <= 200 && (
                     <button
                         onClick={() => dispatch({ type: ActionTypes.TRIGGER_BANKRUPT })}
                         style={{
