@@ -381,6 +381,9 @@ function gameReducer(state, action) {
             newState.ui.logs = logs;
             newState.ui.currentEvent = null; // 清除事件
 
+            // 重新检测金钱预警（防止行动扣费后不弹窗）
+            newState.ui.moneyWarning = checkMoneyWarning(newState);
+
             return newState;
         }
 

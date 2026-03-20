@@ -385,14 +385,17 @@ export function checkEndingAchievements(endingId, endingType, gameState, unlocke
         newlyUnlocked.push(achievements.find(a => a.id === 'ach_all_s_endings'));
     }
 
-    // 好好先生：warningCount 为 0
-    if ((gameState.history?.warningCount || 0) === 0 && unlockAchievement('ach_no_warning')) {
+    // 判断是否为中途失败结局
+    const isEarlyFail = ['bankrupt', 'breakdown', 'expelled', 'dropout_fail'].includes(endingId);
+
+    // 好好先生：warningCount 为 0 且非中途失败结局
+    if (!isEarlyFail && (gameState.history?.warningCount || 0) === 0 && unlockAchievement('ach_no_warning')) {
         newlyUnlocked.push(achievements.find(a => a.id === 'ach_no_warning'));
     }
 
-    // 压力管理大师：整局游戏压力从未超过90（使用 localStorage 标记）
+    // 压力管理大师：整局游戏压力从未超过90 且非中途失败结局（使用 localStorage 标记）
     const stressExceeded = localStorage.getItem('archsim_stress_exceeded_90') === 'true';
-    if (!stressExceeded && unlockAchievement('ach_stress_control')) {
+    if (!isEarlyFail && !stressExceeded && unlockAchievement('ach_stress_control')) {
         newlyUnlocked.push(achievements.find(a => a.id === 'ach_stress_control'));
     }
 

@@ -1,9 +1,9 @@
 /**
  * SaveManager — 后端 API 封装模块
- * 服务端地址: http://api.arc-student-simulator.com:3000
+ * 服务端地址: https://api.arc-student-simulator.com
  */
 
-const API_BASE = 'http://api.arc-student-simulator.com:3000';
+const API_BASE = 'https://api.arc-student-simulator.com';
 
 const SaveManager = {
     /**
