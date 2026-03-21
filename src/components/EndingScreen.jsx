@@ -2,6 +2,7 @@ import React from 'react';
 import { useGame } from '../logic/gameState';
 import { saveEndingRecord, getEndingRecord, getEndingCounts } from '../data/endings';
 import { checkEndingAchievements } from '../data/achievements';
+import SaveManager from '../utils/saveManager';
 
 export default function EndingScreen() {
     const { state, dispatch } = useGame();
@@ -25,40 +26,43 @@ export default function EndingScreen() {
     };
 
     const handleNewLife = () => {
+        // 清除云端游戏进程存档（保留玩家名和积分）
+        const pn = SaveManager.getPlayerName();
+        if (pn) SaveManager.clearSave(pn);
         // 轻量级状态清零，回到抽选导师前主界面
         dispatch({ type: 'HARD_RESET_GAME' });
     };
 
-    const getEndingStyle = (id) => {
+    const getEndingStyle = (endingType) => {
         // S级结局 (金色/史诗炫酷特效)
-        if (['postgrad_s', 'abroad_s', 'job_s'].includes(id)) {
+        if (endingType === 'S') {
             return {
-                background: 'linear-gradient(135deg, #451a03 0%, #78350f 50%, #b45309 100%)',
-                boxShadow: 'inset 0 0 120px rgba(245, 158, 11, 0.6)'
+                background: 'linear-gradient(135deg, #78350f 0%, #d97706 50%, #f59e0b 100%)',
+                boxShadow: 'inset 0 0 150px rgba(245, 158, 11, 0.4)'
             };
         }
-        // A级/优异结局 (蓝紫高科技)
-        if (['job_a', 'pivot_tech', 'pivot_game', 'civil_success'].includes(id)) {
+        // A级结局 (蓝紫高科技)
+        if (endingType === 'A') {
             return {
-                background: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #4c1d95 100%)',
-                boxShadow: 'inset 0 0 80px rgba(99, 102, 241, 0.4)'
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #4338ca 50%, #6366f1 100%)',
+                boxShadow: 'inset 0 0 100px rgba(99, 102, 241, 0.3)'
             };
         }
-        // B级结局 (墨绿/良好)
-        if (['postgrad_a_b', 'abroad_a_b', 'job_b', 'pivot_media'].includes(id)) {
+        // B级结局 (墨绿生机)
+        if (endingType === 'B') {
             return {
-                background: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0f766e 100%)',
-                boxShadow: 'inset 0 0 60px rgba(16, 185, 129, 0.2)'
+                background: 'linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%)',
+                boxShadow: 'inset 0 0 80px rgba(16, 185, 129, 0.2)'
             };
         }
-        // 失败/惩罚结局 (暗红警示深渊)
-        if (['civil_fail', 'abroad_fail', 'postgrad_fail', 'failure_stress', 'failure_warning'].includes(id)) {
+        // FAIL/失败/惩罚结局 (暗红警示)
+        if (endingType === 'FAIL') {
             return {
-                background: 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 50%, #b91c1c 100%)',
-                boxShadow: 'inset 0 0 100px rgba(220, 38, 38, 0.5)'
+                background: 'linear-gradient(135deg, #450a0a 0%, #991b1b 50%, #ef4444 100%)',
+                boxShadow: 'inset 0 0 120px rgba(239, 68, 68, 0.4)'
             };
         }
-        // C/D级普通结局 (灰暗平庸)
+        // 其它/默认 (质感灰)
         return {
             background: 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%)',
             boxShadow: 'none'
@@ -66,7 +70,7 @@ export default function EndingScreen() {
     };
 
     return (
-        <div className="ending-screen" style={getEndingStyle(ending.id)}>
+        <div className="ending-screen" style={getEndingStyle(ending.type)}>
             <div className="ending-content">
                 <div className="ending-emoji">{ending.image}</div>
                 <h1 className="ending-title">{ending.name}</h1>

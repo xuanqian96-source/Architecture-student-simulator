@@ -92,6 +92,8 @@ export default function InitScreen() {
     // 已有玩家名时，检查是否有云端存档
     useEffect(() => {
         if (hasName && playerName) {
+            // 如果本地标记已被清除（玩家主动开启了新游戏），则不再查询服务器
+            if (!SaveManager.hasCloudSave()) return;
             SaveManager.load(playerName).then(result => {
                 if (result.success && result.data?.saveData && Object.keys(result.data.saveData).length > 0) {
                     setHasCloudSave(true);
@@ -100,10 +102,27 @@ export default function InitScreen() {
         }
     }, [hasName, playerName]);
 
-    // 确认玩家名
-    const handleConfirmName = () => {
+    // 名称重复检查状态
+    const [nameError, setNameError] = useState('');
+    const [checkingName, setCheckingName] = useState(false);
+
+    // 确认玩家名（含重复检测）
+    const handleConfirmName = async () => {
         const name = nameInput.trim();
         if (name.length < 2 || name.length > 12) return;
+        setNameError('');
+        setCheckingName(true);
+        try {
+            const result = await SaveManager.checkName(name);
+            if (result.success && result.exists) {
+                setNameError('该玩家名称已被使用，请重新更改');
+                setCheckingName(false);
+                return;
+            }
+        } catch (e) {
+            // 网络错误时仍允许注册（容错）
+        }
+        setCheckingName(false);
         SaveManager.setPlayerName(name);
         setPlayerName(name);
         setHasName(true);
@@ -126,6 +145,13 @@ export default function InitScreen() {
     };
 
     const handleDraw = () => {
+        // 开局首次抽卡 = 开启新游戏，清除旧存档（保留玩家名和积分）
+        if (phase === 'intro' && hasCloudSave) {
+            const pn = SaveManager.getPlayerName();
+            if (pn) SaveManager.clearSave(pn);
+            setHasCloudSave(false);
+        }
+
         // 第一抽不计入3次重抽次数；如果是由于重抽按钮点击，则增加次数
         if (phase === 'result' && drawCount < MAX_DRAWS) {
             setDrawCount(prev => prev + 1);
@@ -224,7 +250,7 @@ export default function InitScreen() {
                             <input
                                 type="text"
                                 value={nameInput}
-                                onChange={e => setNameInput(e.target.value)}
+                                onChange={e => { setNameInput(e.target.value); setNameError(''); }}
                                 onKeyDown={e => e.key === 'Enter' && handleConfirmName()}
                                 placeholder="请输入你的游戏昵称"
                                 maxLength={12}
@@ -239,24 +265,29 @@ export default function InitScreen() {
                                 onFocus={e => e.target.style.borderColor = '#667eea'}
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'}
                             />
-                            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '8px 0 20px' }}>
+                            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '8px 0 4px' }}>
                                 2-12 个字符
                             </p>
+                            {nameError && (
+                                <p style={{ fontSize: '13px', color: '#EF4444', margin: '4px 0 12px', fontWeight: '700' }}>
+                                    ⚠️ {nameError}
+                                </p>
+                            )}
                             <button
                                 onClick={handleConfirmName}
-                                disabled={nameInput.trim().length < 2}
+                                disabled={nameInput.trim().length < 2 || checkingName}
                                 style={{
                                     width: '100%', padding: '14px',
-                                    background: nameInput.trim().length >= 2
+                                    background: nameInput.trim().length >= 2 && !checkingName
                                         ? 'linear-gradient(135deg, #667eea, #764ba2)' : '#E2E8F0',
-                                    color: nameInput.trim().length >= 2 ? 'white' : '#94A3B8',
+                                    color: nameInput.trim().length >= 2 && !checkingName ? 'white' : '#94A3B8',
                                     border: 'none', borderRadius: '12px',
                                     fontSize: '16px', fontWeight: '700',
-                                    cursor: nameInput.trim().length >= 2 ? 'pointer' : 'not-allowed',
+                                    cursor: nameInput.trim().length >= 2 && !checkingName ? 'pointer' : 'not-allowed',
                                     transition: 'all 0.2s'
                                 }}
                             >
-                                确认并开始
+                                {checkingName ? '检查中...' : '确认并开始'}
                             </button>
                         </div>
                     </div>

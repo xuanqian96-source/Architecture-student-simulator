@@ -8,11 +8,9 @@ import { getQualityCap } from '../logic/calculator';
 import NarrativeWindow from './NarrativeWindow';
 import ActionCenter from './ActionCenter';
 import SettingsModal from './SettingsModal';
-import { useAchievementTracker } from '../hooks/useAchievementTracker';
 
 export default function MainStage() {
     const { state, dispatch } = useGame();
-    useAchievementTracker(state);
     const [showSettings, setShowSettings] = React.useState(false);
     const tutor = state.tutor;
     const mission = state.tutorMission;

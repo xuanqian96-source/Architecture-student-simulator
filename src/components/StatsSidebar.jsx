@@ -161,6 +161,9 @@ export default function StatsSidebar() {
                             }}>
                                 {isLowMoney && <span style={{ marginRight: '4px' }}>⚠️</span>}
                                 ¥ {Math.floor(attributes.money).toLocaleString()}
+                                <span style={{ marginLeft: '6px', opacity: 0.6, fontWeight: 'normal', color: isLowMoney ? '#EF4444' : undefined }}>
+                                    (-¥{weeklyLivingCost}/周)
+                                </span>
                             </div>
                         );
                     })()}
@@ -224,6 +227,7 @@ export default function StatsSidebar() {
                                 padding: '20px',
                                 background: isUnlocked ? 'white' : '#F3F4F6',
                                 color: isUnlocked ? '#334155' : '#9CA3AF',
+                                opacity: isDisabled ? 0.5 : 1,
                                 border: 'none',
                                 borderRadius: '16px',
                                 fontWeight: '800',

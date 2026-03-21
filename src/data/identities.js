@@ -104,7 +104,7 @@ export const families = {
     initialMoney: 800,
     designBonus: 5,
     softwareBonus: 30,
-    monthlyAllowance: 1000,
+    monthlyAllowance: 1500,
     weeklyLivingCost: 250,
     skill: {
       id: 'underdog',

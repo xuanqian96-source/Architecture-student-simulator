@@ -26,10 +26,12 @@ import ExamGradScreen from './components/ExamGradScreen';
 import ExamCivilScreen from './components/ExamCivilScreen';
 import AtlasScreen from './components/AtlasScreen';
 import SpotlightTour from './components/SpotlightTour';
+import { useAchievementTracker } from './hooks/useAchievementTracker';
 import './App.css';
 
 function GameContent() {
   const { state, dispatch } = useGame();
+  useAchievementTracker(state);
   const { screen } = state.ui;
 
   // 初始化界面

@@ -1319,7 +1319,7 @@ ${modelOption.description}
                 type: 'year5_final',
                 title: '🎓 最后一年，何去何从？',
                 icon: '🎓',
-                message: '欢迎来到大五——你的建筑学生涯最后一年。从现在起，以下毕业通道已全部开放：保研复试、出国留学投递、研究生统考、公务员考试、以及秋季招聘求职。你可以在左下角的对应入口中选择自己的命运，也可以什么都不做，以一个普通毕业生的身份默默离场。无论你选择哪条路，祝你好运，建筑人。'
+                message: '欢迎来到大五——你的建筑学生涯最后一年。\n\n从现在起，以下毕业通道已全部开放：保研复试、出国留学投递、研究生统考、公务员考试、以及秋季招聘求职。\n\n你可以在左下角的对应入口中选择自己的命运，也可以什么都不做，以一个普通毕业生的身份默默离场。无论你选择哪条路，祝你好运，建筑人。'
             } : null;
 
             // 新学年生活费发放（大二及以后，选完导师即刻到账，对应W1）
@@ -1415,6 +1415,18 @@ ${modelOption.description}
 
             if (reviewResult.consequence === 'fail') {
                 newState.history = { ...newState.history, warningCount: (newState.history.warningCount || 0) + 1 };
+                // 劝退：第二次挂科/警告时立即触发结局，不再进入下学期
+                if (newState.history.warningCount >= 2) {
+                    return {
+                        ...newState,
+                        ui: {
+                            ...state.ui,
+                            screen: 'ending',
+                            ending: endings.expelled,
+                            narrative: endings.expelled.description
+                        }
+                    };
+                }
             }
             newState.history = {
                 ...newState.history,

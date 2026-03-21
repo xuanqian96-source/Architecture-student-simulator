@@ -56,6 +56,41 @@ const SaveManager = {
         }
     },
 
+    /**
+     * 检查玩家名是否已被占用
+     * @param {string} playerName 玩家名称
+     * @returns {Promise<{success: boolean, exists: boolean}>}
+     */
+    async checkName(playerName) {
+        try {
+            const res = await fetch(`${API_BASE}/check-name?playerName=${encodeURIComponent(playerName)}`);
+            return await res.json();
+        } catch (error) {
+            console.error('❌ 检查玩家名失败:', error);
+            return { success: false, exists: false, message: '网络错误，无法连接服务器' };
+        }
+    },
+
+    /**
+     * 清空玩家游戏进程存档（保留玩家名和积分）
+     * @param {string} playerName 玩家名称
+     */
+    async clearSave(playerName) {
+        // 先同步清除本地标记，确保刷新后不会再显示继续游戏
+        this.clearCloudSave();
+        try {
+            const res = await fetch(`${API_BASE}/clear-save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerName })
+            });
+            return await res.json();
+        } catch (error) {
+            console.error('❌ 清空存档失败:', error);
+            return { success: false, message: '网络错误' };
+        }
+    },
+
     // ──── localStorage 玩家名工具 ────
 
     /** 获取本地存储的玩家名 */

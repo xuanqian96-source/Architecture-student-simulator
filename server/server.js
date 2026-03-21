@@ -234,6 +234,77 @@ app.get('/leaderboard', (req, res) => {
     }
 });
 
+/**
+ * POST /clear-save — 清空玩家的游戏进程存档（仅清 saveData，保留玩家名和积分）
+ * 
+ * 请求体：{ "playerName": "张三" }
+ */
+app.post('/clear-save', (req, res) => {
+    try {
+        const { playerName } = req.body;
+
+        if (!playerName || typeof playerName !== 'string' || playerName.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: '玩家名称不能为空'
+            });
+        }
+
+        // 仅将 saveData 清空为 {}，保留 playerName 和 score 不变
+        const stmt = db.prepare(`
+            UPDATE players
+            SET saveData = '{}', updatedAt = CURRENT_TIMESTAMP
+            WHERE playerName = ?
+        `);
+        stmt.run(playerName.trim());
+
+        res.json({
+            success: true,
+            message: '游戏进程存档已清空（玩家名与积分已保留）'
+        });
+
+    } catch (error) {
+        console.error('❌ 清空存档失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器内部错误'
+        });
+    }
+});
+
+/**
+ * GET /check-name — 检查玩家名是否已被使用
+ * 
+ * 查询参数：?playerName=张三
+ */
+app.get('/check-name', (req, res) => {
+    try {
+        const { playerName } = req.query;
+
+        if (!playerName || typeof playerName !== 'string' || playerName.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: '请提供玩家名称'
+            });
+        }
+
+        const stmt = db.prepare('SELECT COUNT(*) as count FROM players WHERE playerName = ?');
+        const row = stmt.get(playerName.trim());
+
+        res.json({
+            success: true,
+            exists: row.count > 0
+        });
+
+    } catch (error) {
+        console.error('❌ 检查玩家名失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器内部错误'
+        });
+    }
+});
+
 // ==========================================
 // 4. 健康检查接口（用于验证服务是否正常运行）
 // ==========================================
@@ -245,7 +316,8 @@ app.get('/', (req, res) => {
         endpoints: [
             'POST /save    - 保存存档',
             'GET  /load    - 读取存档',
-            'GET  /leaderboard - 排行榜'
+            'GET  /leaderboard - 排行榜',
+            'GET  /check-name - 检查玩家名'
         ]
     });
 });

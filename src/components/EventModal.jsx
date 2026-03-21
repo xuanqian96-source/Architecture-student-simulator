@@ -201,7 +201,7 @@ export default function EventModal() {
                 zIndex: 1000
             }} onClick={handleDismissTip}>
                 <div style={{
-                    background: 'white', borderRadius: '20px', padding: '32px',
+                    background: 'white', borderRadius: '20px', padding: '36px 32px 32px',
                     maxWidth: '480px', width: '90%',
                     boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
                 }} onClick={e => e.stopPropagation()}>
@@ -218,7 +218,7 @@ export default function EventModal() {
                         {tip.icon} {tip.title}
                     </h2>
 
-                    <p style={{ fontSize: '15px', lineHeight: '1.8', color: '#475569', marginBottom: '24px' }}>
+                    <p style={{ fontSize: '15px', lineHeight: '1.8', color: '#475569', marginBottom: '24px', whiteSpace: 'pre-line' }}>
                         {tip.message}
                     </p>
 
