@@ -160,8 +160,8 @@ function generateGameTip(week, year, state) {
         }
     }
 
-    // 雅思提醒：每学年第9周
-    if (week === 9 && year >= 2) {
+    // 雅思提醒：每学年第9周（大二~大四，大五不再提醒）
+    if (week === 9 && year >= 2 && year <= 4) {
         if (state.ieltsYearTaken === year) return null; // 当年已报考
         const best = state.bestIelts || 0;
         if (best >= 7.5) return null; // 高分不提醒
@@ -592,6 +592,20 @@ function gameReducer(state, action) {
             if (nextWeek > 12) {
                 nextWeek = 1;
                 nextYear += 1;
+            }
+
+            // ===== 核心修复：大五结束直接触发默认毕业结局 =====
+            if (nextYear > 5) {
+                return {
+                    ...newState,
+                    ui: {
+                        ...state.ui,
+                        screen: 'ending',
+                        ending: endings.default_graduate,
+                        narrative: endings.default_graduate.description,
+                        logs: [...state.ui.logs, '── 游戏结束 ──']
+                    }
+                };
             }
 
             // 分隔符：只在实际推进时添加，使用真实的nextWeek
@@ -1483,6 +1497,20 @@ ${modelOption.description}
             if (nextWeek > 12) {
                 nextWeek = 1;
                 nextYear += 1;
+
+                // ===== 核心修复：大五结束直接触发默认毕业结局 =====
+                if (nextYear > 5) {
+                    return {
+                        ...newState,
+                        ui: {
+                            ...state.ui,
+                            screen: 'ending',
+                            ending: endings.default_graduate,
+                            narrative: endings.default_graduate.description,
+                            logs: [...(state.ui.logs || []), '── 游戏结束 ──']
+                        }
+                    };
+                }
 
                 // === 新学年结算逻辑 ===
                 const newProject = drawProject(nextYear);

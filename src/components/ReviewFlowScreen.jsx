@@ -382,7 +382,9 @@ export default function ReviewFlowScreen() {
                             )}
 
                             <button onClick={handleCompleteReview} style={{ ...btnPrimary, background: '#1E293B' }} onMouseEnter={e => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.target.style.transform = 'translateY(0)'}>
-                                {finalResult.type === 'final' ? '✅ 结算学年并继续' : '✅ 确认并进入下半学期'}
+                                {finalResult.type === 'final'
+                                    ? (state.progress.year >= 5 ? '🎓 确认并结算游戏' : '✅ 结算学年并继续')
+                                    : '✅ 确认并进入下半学期'}
                             </button>
                         </div>
                     );
