@@ -235,6 +235,52 @@ app.get('/leaderboard', (req, res) => {
 });
 
 /**
+ * POST /update-score — 仅更新玩家积分（不影响 saveData）
+ * 
+ * 请求体：{ "playerName": "张三", "score": 1200 }
+ */
+app.post('/update-score', (req, res) => {
+    try {
+        const { playerName, score } = req.body;
+
+        if (!playerName || typeof playerName !== 'string' || playerName.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: '玩家名称不能为空'
+            });
+        }
+
+        const scoreVal = typeof score === 'number' ? score : 0;
+
+        // 仅更新 score 字段，绝不覆盖 saveData
+        const stmt = db.prepare(`
+            UPDATE players SET score = ?, updatedAt = CURRENT_TIMESTAMP
+            WHERE playerName = ?
+        `);
+        const result = stmt.run(scoreVal, playerName.trim());
+
+        if (result.changes === 0) {
+            return res.json({
+                success: false,
+                message: '该玩家不存在'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: '积分更新成功'
+        });
+
+    } catch (error) {
+        console.error('❌ 更新积分失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器内部错误'
+        });
+    }
+});
+
+/**
  * POST /clear-save — 清空玩家的游戏进程存档（仅清 saveData，保留玩家名和积分）
  * 
  * 请求体：{ "playerName": "张三" }

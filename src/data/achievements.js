@@ -244,11 +244,34 @@ export function isAchievementUnlocked(achId) {
     return !!record[achId]?.unlocked;
 }
 
+// ===== 防抖积分自动同步 =====
+let _scoreSyncTimer = null;
+function debouncedScoreSync() {
+    if (_scoreSyncTimer) clearTimeout(_scoreSyncTimer);
+    _scoreSyncTimer = setTimeout(async () => {
+        try {
+            // 动态导入避免循环依赖
+            const { calculateTotalScore } = await import('../utils/scoreCalculator');
+            const SaveManager = (await import('../utils/saveManager')).default;
+            const playerName = SaveManager.getPlayerName();
+            if (playerName) {
+                const { totalScore } = calculateTotalScore();
+                if (totalScore > 0) {
+                    SaveManager.updateScore(playerName, totalScore).catch(() => {});
+                }
+            }
+        } catch (e) {
+            // 静默失败，不影响游戏体验
+        }
+    }, 1000); // 1秒防抖，合并连续解锁
+}
+
 export function unlockAchievement(achId) {
     if (isAchievementUnlocked(achId)) return false; // 已解锁，不重复
     const record = getAchievementRecord();
     record[achId] = { unlocked: true, date: new Date().toISOString() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+    debouncedScoreSync(); // 自动同步积分到排行榜
     return true; // 新解锁
 }
 

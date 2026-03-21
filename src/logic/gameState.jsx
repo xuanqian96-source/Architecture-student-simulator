@@ -182,6 +182,16 @@ function generateGameTip(week, year, state) {
         }
     }
 
+    // 大五第9周：毕业选项二次提醒
+    if (week === 9 && year === 5) {
+        return {
+            type: 'year5_final',
+            title: '⚠️ 毕业季最后提醒',
+            icon: '🎓',
+            message: '你已经踏入大五下半段了！如果你还没有选择毕业出路（保研、出国、考研、考公、求职），请尽快在左下角对应入口中做出选择。\n\n如果你继续什么都不选，做完最后的设计课后，你将以一个普通毕业生的身份默默离场。'
+        };
+    }
+
     // 竞赛投递提醒：大二开始，命中当年随机周
     if (year >= 2 && week === (state.competitionReminderWeek || 0)) {
         const unsubmitted = (state.portfolio || []).filter(p => !p.is_submitted);

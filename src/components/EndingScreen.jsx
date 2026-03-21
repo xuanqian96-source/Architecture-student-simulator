@@ -2,13 +2,14 @@ import React from 'react';
 import { useGame } from '../logic/gameState';
 import { saveEndingRecord, getEndingRecord, getEndingCounts } from '../data/endings';
 import { checkEndingAchievements } from '../data/achievements';
+import { calculateTotalScore } from '../utils/scoreCalculator';
 import SaveManager from '../utils/saveManager';
 
 export default function EndingScreen() {
     const { state, dispatch } = useGame();
     const { ending } = state.ui;
 
-    // 当最终展示结局时持久化记录徽章 + 检测成就
+    // 当最终展示结局时持久化记录徽章 + 检测成就 + 自动同步积分
     React.useEffect(() => {
         if (ending && ending.id) {
             saveEndingRecord(ending.id);
@@ -16,6 +17,15 @@ export default function EndingScreen() {
             const unlockedIds = getEndingRecord();
             const counts = getEndingCounts();
             checkEndingAchievements(ending.id, ending.type, state, unlockedIds, counts);
+
+            // ===== 自动同步积分到排行榜 =====
+            const playerName = SaveManager.getPlayerName();
+            if (playerName) {
+                const { totalScore } = calculateTotalScore();
+                if (totalScore > 0) {
+                    SaveManager.updateScore(playerName, totalScore).catch(() => {});
+                }
+            }
         }
     }, [ending]);
 

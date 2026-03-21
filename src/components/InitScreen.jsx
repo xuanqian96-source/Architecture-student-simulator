@@ -6,6 +6,7 @@ import { generateIdentity } from '../data/identities';
 import ArchivesModal from './ArchivesModal';
 import LeaderboardModal from './LeaderboardModal';
 import { checkIdentityAchievements } from '../data/achievements';
+import { calculateTotalScore } from '../utils/scoreCalculator';
 import SaveManager from '../utils/saveManager';
 
 // ── 稀有度工具函数 ──────────────────────────────────────────────────────────
@@ -99,6 +100,16 @@ export default function InitScreen() {
                     setHasCloudSave(true);
                 }
             }).catch(() => {});
+        }
+    }, [hasName, playerName]);
+
+    // 老玩家积分自动同步：进入主页时静默上传积分到排行榜
+    useEffect(() => {
+        if (hasName && playerName) {
+            const { totalScore } = calculateTotalScore();
+            if (totalScore > 0) {
+                SaveManager.updateScore(playerName, totalScore).catch(() => {});
+            }
         }
     }, [hasName, playerName]);
 

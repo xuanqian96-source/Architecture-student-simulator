@@ -57,6 +57,26 @@ const SaveManager = {
     },
 
     /**
+     * 仅更新玩家积分（不影响 saveData）
+     * @param {string} playerName 玩家名称
+     * @param {number} score      最新总积分
+     * @returns {Promise<{success: boolean, message: string}>}
+     */
+    async updateScore(playerName, score) {
+        try {
+            const res = await fetch(`${API_BASE}/update-score`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerName, score })
+            });
+            return await res.json();
+        } catch (error) {
+            console.error('❌ 积分更新失败:', error);
+            return { success: false, message: '网络错误' };
+        }
+    },
+
+    /**
      * 检查玩家名是否已被占用
      * @param {string} playerName 玩家名称
      * @returns {Promise<{success: boolean, exists: boolean}>}
