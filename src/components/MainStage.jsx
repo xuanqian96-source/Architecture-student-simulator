@@ -9,7 +9,7 @@ import NarrativeWindow from './NarrativeWindow';
 import ActionCenter from './ActionCenter';
 import SettingsModal from './SettingsModal';
 
-export default function MainStage() {
+export default function MainStage({ isMobile }) {
     const { state, dispatch } = useGame();
     const [showSettings, setShowSettings] = React.useState(false);
     const tutor = state.tutor;
@@ -65,9 +65,9 @@ export default function MainStage() {
     }
 
     return (
-        <div className="main-stage">
+        <div className={isMobile ? 'main-stage mobile' : 'main-stage'}>
             {/* 上半部分：左右分栏排列 */}
-            <div className="main-stage-top">
+            <div className={isMobile ? 'main-stage-top mobile' : 'main-stage-top'}>
                 {/* 左半区：行动日志 */}
                 <div className="log-area-container">
                     <NarrativeWindow />
@@ -230,7 +230,7 @@ export default function MainStage() {
                 </div>
             </div>
 
-            <ActionCenter />
+            {!isMobile && <ActionCenter />}
             {/* 顶层挂载的全局设置系统 */}
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         </div>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
 import { getPortfolioData, getTutorPortfolioComment } from '../data/portfolioCorpus';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function PortfolioScreen() {
     const { state, dispatch } = useGame();
+    const isMobile = useIsMobile();
     const { portfolio, portfolioScore } = state;
     const [selectedProject, setSelectedProject] = useState(null);
 
@@ -131,23 +133,23 @@ export default function PortfolioScreen() {
                 top: 0, left: 0, right: 0, bottom: 0,
                 background: 'rgba(15, 23, 42, 0.85)',
                 backdropFilter: 'blur(12px)',
-                zIndex: 1000,
+                zIndex: 9100,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '40px'
+                padding: isMobile ? '8px' : '40px'
             }}>
                 <div style={{
                     background: 'white',
                     width: '100%',
-                    maxWidth: '1400px',
-                    height: '100%',
-                    maxHeight: '850px',
-                    borderRadius: '12px',
+                    maxWidth: isMobile ? '100%' : '1400px',
+                    height: isMobile ? '100%' : '100%',
+                    maxHeight: isMobile ? '100%' : '850px',
+                    borderRadius: isMobile ? '0' : '12px',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                     display: 'flex',
-                    flexDirection: 'row',
-                    overflow: 'hidden',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    overflow: isMobile ? 'auto' : 'hidden',
                     position: 'relative',
                     fontFamily: 'sans-serif'
                 }}>
@@ -155,16 +157,18 @@ export default function PortfolioScreen() {
                     <button
                         onClick={() => setSelectedProject(null)}
                         style={{
-                            position: 'absolute',
-                            top: '24px', right: '32px',
-                            background: 'rgba(255,255,255,0.8)',
-                            border: 'none',
+                            position: isMobile ? 'fixed' : 'absolute',
+                            top: isMobile ? '12px' : '24px',
+                            right: isMobile ? '12px' : '32px',
+                            background: 'rgba(255,255,255,0.9)',
+                            border: '1px solid #E2E8F0',
                             borderRadius: '50%',
-                            width: '48px', height: '48px',
-                            fontSize: '32px',
+                            width: isMobile ? '36px' : '48px',
+                            height: isMobile ? '36px' : '48px',
+                            fontSize: isMobile ? '22px' : '32px',
                             color: '#1E293B',
                             cursor: 'pointer',
-                            zIndex: 20,
+                            zIndex: 1010,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                         }}
@@ -172,8 +176,8 @@ export default function PortfolioScreen() {
 
                     {/* 左侧文字与参数面板 (35%) */}
                     <div style={{
-                        width: '35%',
-                        padding: '50px',
+                        width: isMobile ? '100%' : '35%',
+                        padding: isMobile ? '20px' : '50px',
                         display: 'flex',
                         flexDirection: 'column',
                         background: 'white',
@@ -256,7 +260,7 @@ export default function PortfolioScreen() {
 
                     {/* 右侧：纯白底图纸全景展示区 (65%) */}
                     <div style={{
-                        width: '65%',
+                        width: isMobile ? '100%' : '65%',
                         position: 'relative',
                         background: 'white',
                         display: 'flex',
@@ -284,7 +288,7 @@ export default function PortfolioScreen() {
     };
 
     return (
-        <div style={{ padding: '40px', width: '100%', height: '100%', overflowY: 'auto', background: '#F0F4F8' }}>
+        <div style={{ padding: isMobile ? '12px' : '40px', width: '100%', height: isMobile ? 'auto' : '100%', overflowY: 'auto', background: '#F0F4F8' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
                 {/* 顶部标题栏 */}
@@ -339,7 +343,7 @@ export default function PortfolioScreen() {
                 ) : (
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
                         gap: '28px'
                     }}>
                         {portfolio.map(proj => (

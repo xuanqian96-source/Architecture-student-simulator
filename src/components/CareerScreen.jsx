@@ -3,9 +3,11 @@ import { useGame } from '../logic/gameState';
 import { careerPaths, canApplyJob, internships, INTERN_WEEKLY_STRESS, canIntern } from '../data/employment';
 import { endings } from '../data/endings';
 import ResumeModal from './ResumeModal';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function CareerScreen() {
     const { state, dispatch } = useGame();
+    const isMobile = useIsMobile();
     const [path, setPath] = useState(state.progress.year < 5 ? 'internship' : 'architecture');
     const [showResume, setShowResume] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
@@ -46,7 +48,7 @@ export default function CareerScreen() {
     const jobs = path === 'internship' ? [] : careerPaths[path];
 
     return (
-        <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+        <div className="screen-container" style={{ padding: isMobile ? '12px' : '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                     <h1 style={{ fontSize: '28px', color: '#1E293B', margin: '0 0 8px 0' }}>
@@ -70,7 +72,7 @@ export default function CareerScreen() {
             </div>
 
             {/* 路径切换 + 简历按钮 */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '16px' : '24px' }}>
                 <button
                     disabled={state.progress.year >= 5}
                     onClick={() => setPath('internship')}
@@ -109,7 +111,7 @@ export default function CareerScreen() {
             {/* ResumeModal */}
             {showResume && <ResumeModal onClose={() => setShowResume(false)} />}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '20px', overflowY: 'auto' }}>
                 {path === 'internship' ? internships.map(intern => {
                     const isEligible = canIntern(intern, state);
                     const isArch = intern.type === '建筑';

@@ -1,6 +1,6 @@
 // 主应用组件
 
-import React from 'react';
+import React, { useState } from 'react';
 import { GameProvider, useGame } from './logic/gameState';
 import StatsSidebar from './components/StatsSidebar';
 import MainStage from './components/MainStage';
@@ -27,12 +27,18 @@ import ExamCivilScreen from './components/ExamCivilScreen';
 import AtlasScreen from './components/AtlasScreen';
 import SpotlightTour from './components/SpotlightTour';
 import { useAchievementTracker } from './hooks/useAchievementTracker';
+import { useIsMobile } from './hooks/useIsMobile';
+import MobileHeader from './components/mobile/MobileHeader';
+import MobileDrawer from './components/mobile/MobileDrawer';
+import MobileActionBar from './components/mobile/MobileActionBar';
 import './App.css';
 
 function GameContent() {
   const { state, dispatch } = useGame();
   useAchievementTracker(state);
+  const isMobile = useIsMobile();
   const { screen } = state.ui;
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // 初始化界面
   if (!state.initialized) {
@@ -49,7 +55,50 @@ function GameContent() {
     return <EndingScreen />;
   }
 
-  // 主游戏界面
+  // ===== 移动端布局 =====
+  if (isMobile) {
+    return (
+      <div className="app-container-mobile">
+        <MobileHeader onMenuToggle={() => setDrawerOpen(!drawerOpen)} highlightMenu={!!state.gameTip} />
+        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+        {/* 主内容区 */}
+        <div className="mobile-content">
+          {screen === 'game' && <MainStage isMobile />}
+          {screen === 'review' && <ReviewScreen />}
+          {screen === 'model' && <ModelScreen />}
+          {screen === 'shop' && <ShopScreen />}
+          {screen === 'job' && <JobScreen />}
+          {screen === 'choice' && <ChoiceScreen />}
+          {screen === 'defense' && <DefenseScreen />}
+          {screen === 'reviewFlow' && <ReviewFlowScreen />}
+          {screen === 'tutorDraw' && <TutorDrawScreen />}
+          {screen === 'portfolio' && <PortfolioScreen />}
+          {screen === 'competitions' && <CompetitionScreen />}
+          {screen === 'postgrad' && <PostgradScreen />}
+          {screen === 'studyAbroad' && <StudyAbroadScreen />}
+          {screen === 'internship' && <InternScreen />}
+          {screen === 'jobSearch' && <CareerScreen />}
+          {screen === 'examGrad' && <ExamGradScreen />}
+          {screen === 'examCivil' && <ExamCivilScreen />}
+          {screen === 'atlas' && <AtlasScreen />}
+        </div>
+
+        {/* 游戏主界面显示底部行动栏 */}
+        {screen === 'game' && <MobileActionBar />}
+
+        {/* 事件弹窗 */}
+        <EventModal />
+
+        {/* 新手指引 */}
+        {state.tutorialActive && (
+          <SpotlightTour onComplete={() => dispatch({ type: 'TOGGLE_TUTORIAL', payload: false })} />
+        )}
+      </div>
+    );
+  }
+
+  // ===== 桌面端布局（原有 — 不改动） =====
   return (
     <div className="app-container">
       <StatsSidebar />

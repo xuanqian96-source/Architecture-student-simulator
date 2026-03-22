@@ -910,3 +910,242 @@ body {
   transform: translateY(-2px);
   box-shadow: var(--shadow-soft);
 }
+
+/* ====================================================================
+   移动端响应式布局 (≤768px)
+   ====================================================================  */
+
+/* 移动端 App 容器 */
+.app-container-mobile {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+/* 移动端主内容区 — 顶部留出 MobileHeader 空间，底部留出 MobileActionBar 空间 */
+.mobile-content {
+  flex: 1;
+  padding-top: 75px;  /* MobileHeader 高度（两行属性+可能的指引文字） */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 移动端内容区内的直接子组件：确保正确撑开，而非固定 100% 高度 */
+.mobile-content > div {
+  min-height: calc(100vh - 50px);
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* 移动端 game 屏幕时额外留底部行动栏空间 */
+.mobile-content:has(.main-stage.mobile) {
+  padding-bottom: 200px; /* MobileActionBar 大致高度 */
+}
+
+@media (max-width: 768px) {
+  /* 隐藏桌面端侧边栏（安全兜底，实际已在 App.jsx 条件渲染隐去） */
+  .stats-sidebar {
+    display: none;
+  }
+
+  /* 主舞台全宽 */
+  .main-stage {
+    width: 100%;
+    height: auto;
+    min-height: calc(100vh - 50px);
+  }
+
+  .main-stage.mobile {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  /* 上半区改为纵向堆叠 */
+  .main-stage-top.mobile {
+    flex-direction: column;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* 行动日志全宽 */
+  .log-area-container {
+    flex: none;
+    width: 100%;
+    min-height: 280px;
+    max-height: 50vh;
+  }
+
+  /* 课题+导师面板全宽 */
+  .project-tutor-panel {
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: 160px;
+  }
+
+  /* 行动区域（已在移动端由 MobileActionBar 替代，但作为兜底） */
+  .action-center {
+    display: none;
+  }
+
+  /* ===== 日志列表适配 ===== */
+  .log-header {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .log-list {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .log-entry {
+    font-size: 13px;
+    padding: 8px 10px;
+    line-height: 1.5;
+  }
+
+  .log-week-label {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+
+  /* ===== 全屏类界面适配 ===== */
+
+  /* 初始化界面 */
+  .init-screen {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .init-content {
+    padding: 24px 16px;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .init-title {
+    font-size: 22px;
+  }
+
+  .init-subtitle {
+    font-size: 14px;
+  }
+
+  /* 结局界面 */
+  .ending-screen {
+    padding: 20px 12px;
+  }
+
+  .ending-content {
+    padding: 16px;
+  }
+
+  .ending-emoji {
+    font-size: 56px;
+  }
+
+  .ending-title {
+    font-size: 24px;
+  }
+
+  .ending-description {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ===== 弹窗/模态适配 ===== */
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .modal-body {
+    padding: 12px 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+
+  /* ===== 网格类适配 ===== */
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .option-card {
+    padding: 16px;
+  }
+
+  .option-title {
+    font-size: 15px;
+  }
+
+  .choice-options {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .choice-button {
+    padding: 16px;
+    font-size: 14px;
+  }
+
+  /* 通用 screen-container 移动端 */
+  .screen-container {
+    height: auto;
+    min-height: calc(100vh - 50px);
+    padding: 8px;
+  }
+
+  /* ===== 叙事文本适配 ===== */
+  .narrative-title {
+    font-size: 18px;
+  }
+
+  .narrative-text {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .event-effects {
+    padding: 12px;
+  }
+
+  .effect-item {
+    font-size: 13px;
+  }
+
+  /* ===== 按钮尺寸统一适配 ===== */
+  .start-button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .restart-button {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+  }
+}

@@ -4,9 +4,11 @@ import { saveEndingRecord, getEndingRecord, getEndingCounts } from '../data/endi
 import { checkEndingAchievements } from '../data/achievements';
 import { calculateTotalScore } from '../utils/scoreCalculator';
 import SaveManager from '../utils/saveManager';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function EndingScreen() {
     const { state, dispatch } = useGame();
+    const isMobile = useIsMobile();
     const { ending } = state.ui;
 
     // 当最终展示结局时持久化记录徽章 + 检测成就 + 自动同步积分
@@ -105,8 +107,8 @@ export default function EndingScreen() {
                 <p className="ending-description">{ending.description}</p>
 
                 <div style={{
-                    marginBottom: '32px',
-                    padding: '24px',
+                    marginBottom: isMobile ? '20px' : '32px',
+                    padding: isMobile ? '14px' : '24px',
                     background: 'rgba(255,255,255,0.1)',
                     borderRadius: '12px',
                     textAlign: 'center'

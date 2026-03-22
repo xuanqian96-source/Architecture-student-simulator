@@ -6,10 +6,11 @@ import ReactMarkdown from 'react-markdown';
 import SaveManager from '../utils/saveManager';
 import { calculateTotalScore } from '../utils/scoreCalculator';
 import LeaderboardModal from './LeaderboardModal';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function SettingsModal({ onClose }) {
     const { dispatch, state } = useGame();
-    // panel 类型: 'menu' | 'desc' | 'about' | 'archives' | 'restart'
+    const isMobile = useIsMobile();
     const [panel, setPanel] = useState('menu');
     const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'success' | 'error'
 
@@ -101,9 +102,11 @@ export default function SettingsModal({ onClose }) {
             zIndex: 99990, padding: '20px'
         }}>
             <div style={{
-                background: 'white', borderRadius: '24px', width: '480px',
-                minHeight: '400px', padding: '32px', position: 'relative',
-                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+                background: 'white', borderRadius: isMobile ? '16px' : '24px', width: isMobile ? '100%' : '480px',
+                minHeight: isMobile ? 'auto' : '400px', maxHeight: isMobile ? '90vh' : 'none',
+                padding: isMobile ? '20px' : '32px', position: 'relative',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column',
+                overflowY: isMobile ? 'auto' : 'visible'
             }}>
                 {/* 关闭或返回按钮 */}
                 {panel === 'menu' ? (
@@ -155,7 +158,7 @@ export default function SettingsModal({ onClose }) {
                                  '☁️ 保存进度到云端'}
                             </button>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '8px' : '16px' }}>
                                 <button onClick={() => setPanel('desc')} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>📝 游戏说明</button>
                                 <button onClick={handleReTutorial} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>🎓 新手指引</button>
                                 <button onClick={() => setPanel('about')} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>ℹ️ 作者的话</button>

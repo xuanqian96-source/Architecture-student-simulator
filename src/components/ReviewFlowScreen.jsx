@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
 import { defenseStrategies } from '../data/defense';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const gradeColors = {
     S: '#F59E0B', A: '#F97316', B: '#3B82F6',
@@ -42,6 +43,7 @@ const injectedStyles = `
 
 export default function ReviewFlowScreen() {
     const { state, dispatch, ActionTypes } = useGame();
+    const isMobile = useIsMobile();
     const { tutorMissionResult, defenseResult, pendingReviewResult } = state;
     const [step, setStep] = useState('tutorJudgment'); // tutorJudgment → defense → defenseResult → review
     const [selectedStrategy, setSelectedStrategy] = useState(null);
@@ -84,24 +86,24 @@ export default function ReviewFlowScreen() {
     const isMidterm = pendingReviewResult?.type === 'midterm';
     const cardStyle = {
         background: 'white',
-        borderRadius: '24px',
-        padding: '40px',
-        maxWidth: '750px',
+        borderRadius: isMobile ? '16px' : '24px',
+        padding: isMobile ? '16px' : '40px',
+        maxWidth: isMobile ? '100%' : '750px',
         width: '100%',
         boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)',
         animation: 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
     };
     const btnPrimary = {
         width: '100%',
-        padding: '18px',
+        padding: isMobile ? '14px' : '18px',
         background: '#3B82F6',
         color: 'white',
         border: 'none',
-        borderRadius: '16px',
-        fontSize: '18px',
+        borderRadius: isMobile ? '12px' : '16px',
+        fontSize: isMobile ? '15px' : '18px',
         fontWeight: '800',
         cursor: 'pointer',
-        marginTop: '28px',
+        marginTop: isMobile ? '16px' : '28px',
         transition: 'all 0.2s',
         boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
     };
@@ -115,7 +117,7 @@ export default function ReviewFlowScreen() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '32px',
+                padding: isMobile ? '12px' : '32px',
                 overflow: 'auto',
                 background: 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
             }}>
@@ -176,7 +178,7 @@ export default function ReviewFlowScreen() {
 
                 {/* Step 2: 汇报策略选择 */}
                 {step === 'defense' && (
-                    <div style={{ ...cardStyle, maxWidth: '850px' }} key="step2">
+                    <div style={{ ...cardStyle, maxWidth: isMobile ? '100%' : '850px' }} key="step2">
                         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                             <h2 style={{ fontSize: '28px', fontWeight: '900', color: '#0F172A', marginTop: 0, marginBottom: '12px' }}>
                                 🎤 选择汇报策略
@@ -185,7 +187,7 @@ export default function ReviewFlowScreen() {
                                 评图现场，你将以何种姿态向评委们展示你的方案？不同的策略面临不同的风险与收益。
                             </p>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? '10px' : '16px' }}>
                             {defenseStrategies.map(strategy => {
                                 const req = checkReqs(strategy);
                                 const isSelected = selectedStrategy === strategy.id;
@@ -314,8 +316,8 @@ export default function ReviewFlowScreen() {
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: '160px',
-                                    height: '160px',
+                                    width: isMobile ? '110px' : '160px',
+                                    height: isMobile ? '110px' : '160px',
                                     borderRadius: '50%',
                                     background: `linear-gradient(135deg, ${gradeColor}11 0%, ${gradeColor}33 100%)`,
                                     border: `6px solid ${gradeColor}`,
@@ -323,7 +325,7 @@ export default function ReviewFlowScreen() {
                                     animation: isHighGrade ? 'pulseGlow 2s infinite' : 'none',
                                 }}>
                                     <span style={{
-                                        fontSize: '86px',
+                                        fontSize: isMobile ? '56px' : '86px',
                                         fontWeight: '900',
                                         color: gradeColor,
                                         filter: `drop-shadow(0 4px 8px ${gradeColor}66)`

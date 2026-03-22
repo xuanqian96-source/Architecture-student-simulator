@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
 import { atlasBuildings, atlasMilestones } from '../data/atlas.js';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 // 地图上12个节点的位置（Z字形蜿蜒路线）
 const nodePositions = [
@@ -40,8 +41,9 @@ export default function AtlasScreen() {
     const { state, dispatch } = useGame();
     const atlas = state.atlas || {};
     const [selectedIdx, setSelectedIdx] = useState(null);
-    const [flyingTarget, setFlyingTarget] = useState(null); // 记录飞机当前飞向的节点索引
-    const [showLegend, setShowLegend] = useState(false); // 控制里程碑奖励卡片显示
+    const [flyingTarget, setFlyingTarget] = useState(null);
+    const [showLegend, setShowLegend] = useState(false);
+    const isMobile = useIsMobile();
 
     const handleClose = () => {
         dispatch({ type: 'CHANGE_SCREEN', payload: { screen: 'game' } });
@@ -111,38 +113,64 @@ export default function AtlasScreen() {
             </div>
 
             {/* 图例说明卡片 */}
-            <div style={{
-                position: 'absolute', top: '90px', right: '20px',
-                background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
-                padding: '12px 16px', borderRadius: '12px',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                fontSize: '12px', color: '#475569', fontWeight: '600',
-                display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 2
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F1F5F9', border: '1px solid #CBD5E1' }}></div>
-                    <span>未解锁图标</span>
+            {isMobile ? (
+                /* 移动端：内联在标题下方 */
+                <div style={{
+                    padding: '8px 16px', display: 'flex', gap: '12px', flexWrap: 'wrap',
+                    borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+                    background: 'rgba(255,255,255,0.6)', fontSize: '11px', color: '#475569', fontWeight: '600',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#F1F5F9', border: '1px solid #CBD5E1' }} />
+                        <span>未解锁</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'white', border: '1px solid #64748B' }} />
+                        <span>可考察</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EFF6FF', border: '1px solid #3B82F6' }} />
+                        <span style={{ color: '#2563EB' }}>考察中</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#F0FDFA', border: '1px solid #0D9488' }} />
+                        <span style={{ color: '#0F766E' }}>已点亮</span>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'white', border: '1px solid #64748B' }}></div>
-                    <span>可前往考察</span>
+            ) : (
+                <div style={{
+                    position: 'absolute', top: '90px', right: '20px',
+                    background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
+                    padding: '12px 16px', borderRadius: '12px',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    fontSize: '12px', color: '#475569', fontWeight: '600',
+                    display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 2
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F1F5F9', border: '1px solid #CBD5E1' }}></div>
+                        <span>未解锁图标</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'white', border: '1px solid #64748B' }}></div>
+                        <span>可前往考察</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#EFF6FF', border: '1px solid #3B82F6' }}></div>
+                        <span style={{ color: '#2563EB' }}>考察进行中</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F0FDFA', border: '1px solid #0D9488' }}></div>
+                        <span style={{ color: '#0F766E' }}>已点亮建筑</span>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#EFF6FF', border: '1px solid #3B82F6' }}></div>
-                    <span style={{ color: '#2563EB' }}>考察进行中</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F0FDFA', border: '1px solid #0D9488' }}></div>
-                    <span style={{ color: '#0F766E' }}>已点亮建筑</span>
-                </div>
-            </div>
+            )}
 
             {/* 地图区域 */}
             <div style={{
                 flex: 1, position: 'relative', padding: '20px', overflow: 'auto'
             }}>
-                <div style={{ position: 'relative', width: '100%', height: '480px', marginTop: '10px' }}>
+                <div style={{ position: 'relative', width: '100%', height: isMobile ? '380px' : '480px', marginTop: '10px' }}>
                     {/* SVG连线（带弧度加粗的航线），使用 viewBox 映射百分比坐标 */}
                     <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}>
                         {connections.map(([a, b], i) => {
@@ -289,53 +317,69 @@ export default function AtlasScreen() {
             {/* 底部里程碑条 */}
             <div style={{
                 position: 'relative',
-                padding: '24px 32px', borderTop: '1px solid rgba(148, 163, 184, 0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px',
+                padding: isMobile ? '16px 12px' : '24px 32px',
+                borderTop: '1px solid rgba(148, 163, 184, 0.2)',
                 background: 'rgba(255, 255, 255, 0.85)',
                 backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                 zIndex: 5
             }}>
-                <div style={{ position: 'absolute', left: '24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: '800', color: '#1E293B' }}>阶段里程碑</span>
+                {/* 标题 */}
+                <div style={{
+                    display: 'flex', flexDirection: 'column', gap: '2px',
+                    marginBottom: isMobile ? '12px' : '0',
+                    ...(isMobile ? {} : { position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)' })
+                }}>
+                    <span style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: '800', color: '#1E293B' }}>阶段里程碑</span>
                     <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748B' }}>点亮建筑领奖励</span>
                 </div>
-                {atlasMilestones.map((ms, i) => {
-                    const reached = visitedCount >= ms.count;
-                    return (
-                        <div key={ms.count} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            {i > 0 && <div style={{
-                                width: '60px', height: '3px',  // 连线更长更粗
-                                background: reached ? '#0EA5E9' : '#E2E8F0', // 皇家蓝色系
-                                position: 'relative'
-                            }} />}
-                            <div 
-                                style={{
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                                    cursor: 'pointer', transition: 'transform 0.2s',
-                                }}
-                                onClick={() => setShowLegend(ms)}
-                                onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                                onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-                            >
-                                <div style={{
-                                    width: '44px', height: '44px', borderRadius: '50%', // 放大数字圈
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '18px', fontWeight: '900',
-                                    background: reached ? '#F0F9FF' : '#F8FAFC',
-                                    color: reached ? '#0284C7' : '#94A3B8',
-                                    border: `3px solid ${reached ? '#0EA5E9' : '#E2E8F0'}`,
-                                    boxShadow: reached ? '0 4px 16px rgba(14, 165, 233, 0.2)' : 'none',
-                                }}>
-                                    {reached ? '✨' : ms.count}
+
+                {/* 里程碑节点 */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: isMobile ? '6px' : '16px',
+                    flexWrap: isMobile ? 'nowrap' : 'nowrap',
+                    overflowX: isMobile ? 'auto' : 'visible',
+                    paddingBottom: isMobile ? '4px' : '0',
+                }}>
+                    {atlasMilestones.map((ms, i) => {
+                        const reached = visitedCount >= ms.count;
+                        return (
+                            <div key={ms.count} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '16px' }}>
+                                {i > 0 && <div style={{
+                                    width: isMobile ? '24px' : '60px', height: '3px',
+                                    background: reached ? '#0EA5E9' : '#E2E8F0',
+                                    flexShrink: 0,
+                                }} />}
+                                <div 
+                                    style={{
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? '4px' : '8px',
+                                        cursor: 'pointer', transition: 'transform 0.2s',
+                                        flexShrink: 0,
+                                    }}
+                                    onClick={() => setShowLegend(ms)}
+                                >
+                                    <div style={{
+                                        width: isMobile ? '36px' : '44px', height: isMobile ? '36px' : '44px', borderRadius: '50%',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: isMobile ? '14px' : '18px', fontWeight: '900',
+                                        background: reached ? '#F0F9FF' : '#F8FAFC',
+                                        color: reached ? '#0284C7' : '#94A3B8',
+                                        border: `3px solid ${reached ? '#0EA5E9' : '#E2E8F0'}`,
+                                        boxShadow: reached ? '0 4px 16px rgba(14, 165, 233, 0.2)' : 'none',
+                                    }}>
+                                        {reached ? '✨' : ms.count}
+                                    </div>
+                                    <span style={{
+                                        fontSize: isMobile ? '11px' : '13px', fontWeight: '800',
+                                        color: reached ? '#0369A1' : '#94A3B8'
+                                    }}>{ms.count}座</span>
                                 </div>
-                                <span style={{
-                                    fontSize: '13px', fontWeight: '800',
-                                    color: reached ? '#0369A1' : '#94A3B8'
-                                }}>{ms.count}座</span>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
             {/* 里程碑奖励说明弹框 */}

@@ -3,9 +3,11 @@ import { useGame } from '../logic/gameState';
 import { postgradTiers, postgradRequirements, canApplyPostgrad, drawInterviewQuestions } from '../data/postgrad';
 import { getPortfolioScore } from '../data/postgrad';
 import { endings } from '../data/endings';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function PostgradScreen() {
     const { state, dispatch } = useGame();
+    const isMobile = useIsMobile();
     const [selectedTier, setSelectedTier] = useState(null);
     const [phase, setPhase] = useState('select'); // select, interview, result
     const [questions, setQuestions] = useState([]);
@@ -156,11 +158,11 @@ export default function PostgradScreen() {
     }
 
     return (
-        <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="screen-container" style={{ padding: isMobile ? '12px' : '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '16px' : '24px' }}>
                 <div>
-                    <h1 style={{ fontSize: '28px', color: '#1E293B', margin: '0 0 8px 0' }}>👑 申请推免硕博连读</h1>
-                    <p style={{ color: '#64748B', margin: 0 }}>准备好面对最严苛的学术拷问了吗？（大四即第4年12周后开放）</p>
+                    <h1 style={{ fontSize: isMobile ? '20px' : '28px', color: '#1E293B', margin: '0 0 8px 0' }}>👑 申请推免硕博连读</h1>
+                    <p style={{ color: '#64748B', margin: 0, fontSize: isMobile ? '12px' : '14px' }}>准备好面对最严苛的学术拷问了吗？（大四即第4年12周后开放）</p>
                 </div>
                 <button onClick={handleClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✖</button>
             </div>
@@ -168,7 +170,7 @@ export default function PostgradScreen() {
             {/* 资格自查面板 */}
             <div style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                 <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#334155' }}>资格审查自检</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '8px' : '16px' }}>
                     <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '4px' }}>必须大四结课后</div>
                         <div style={{ fontSize: '16px', fontWeight: 'bold', color: state.progress.totalWeeks >= 48 ? '#10B981' : '#EF4444' }}>
@@ -197,7 +199,7 @@ export default function PostgradScreen() {
             </div>
 
             {/* 院校选择列表 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '24px', flex: 1, minHeight: 0 }}>
                 {postgradTiers.map(tier => {
                     const canApplyThis = isEligible && currentPS >= tier.psRequirement && currentDesign >= tier.designRequirement;
                     return (

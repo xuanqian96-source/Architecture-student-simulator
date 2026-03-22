@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../logic/gameState';
 import { examGradTiers, drawExamGradQuestions, calculateExamGradScore } from '../data/examGrad';
 import { endings } from '../data/endings';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function ExamGradScreen() {
     const { state, dispatch } = useGame();
-    const [phase, setPhase] = useState('select'); // select, exam, result
+    const isMobile = useIsMobile();
+    const [phase, setPhase] = useState('select');
     const [selectedTier, setSelectedTier] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -100,7 +102,7 @@ export default function ExamGradScreen() {
                         {q.question}
                     </h2>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '10px' : '16px' }}>
                         {q.options.map((opt, i) => (
                             <button
                                 key={i}
@@ -159,7 +161,7 @@ export default function ExamGradScreen() {
     }
 
     return (
-        <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+        <div className="screen-container" style={{ padding: isMobile ? '12px' : '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                     <h1 style={{ fontSize: '28px', color: '#1E293B', margin: '0 0 8px 0' }}>📚 研究生统一考试报名</h1>
@@ -168,7 +170,7 @@ export default function ExamGradScreen() {
                 <button onClick={handleClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✖</button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '24px', flex: 1, minHeight: 0 }}>
                 {examGradTiers.map(tier => (
                     <div
                         key={tier.id}

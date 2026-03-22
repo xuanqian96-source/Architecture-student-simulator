@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { ALL_ENDINGS, getEndingRecord, getEndingCounts } from '../data/endings';
 import { achievements, getAchievementRecord, getUnlockedCount } from '../data/achievements';
 import { calculateTotalScore } from '../utils/scoreCalculator';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function ArchivesModal({ onClose }) {
-    const [tab, setTab] = useState('endings'); // 'endings' | 'achievements'
+    const [tab, setTab] = useState('endings');
+    const isMobile = useIsMobile();
     const unlockedIds = getEndingRecord();
     const endingCounts = getEndingCounts();
     const [selectedEnding, setSelectedEnding] = useState(null);
@@ -32,25 +34,25 @@ export default function ArchivesModal({ onClose }) {
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
             background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 99999, padding: '20px'
+            zIndex: 99999, padding: isMobile ? '8px' : '20px'
         }}>
             <div style={{
-                background: '#F8FAFC', borderRadius: '24px', width: '100%', maxWidth: '780px',
-                maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+                background: '#F8FAFC', borderRadius: isMobile ? '16px' : '24px', width: '100%', maxWidth: isMobile ? '100%' : '780px',
+                maxHeight: isMobile ? '95vh' : '85vh', display: 'flex', flexDirection: 'column',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden',
                 position: 'relative'
             }}>
                 {/* 头部区域 */}
                 <div style={{
-                    padding: '24px 32px 0', background: 'white',
+                    padding: isMobile ? '12px 12px 0' : '24px 32px 0', background: 'white',
                     borderBottom: '1px solid #E2E8F0',
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                        <div>
-                            <h2 style={{ fontSize: '24px', fontWeight: '900', color: '#1E293B', margin: '0 0 4px' }}>
-                                🏛️ 档案馆：我的一百种人生
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: isMobile ? '10px' : '20px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <h2 style={{ fontSize: isMobile ? '18px' : '24px', fontWeight: '900', color: '#1E293B', margin: '0 0 4px' }}>
+                                🏛️ 档案馆
                             </h2>
-                            <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontWeight: '600' }}>
+                            <p style={{ margin: 0, fontSize: isMobile ? '12px' : '14px', color: '#64748B', fontWeight: '600' }}>
                                 {tab === 'endings'
                                     ? <>已收集结局：<span style={{ color: '#3B82F6' }}>{unlockedEndingsCount}</span> / {totalEndingsCount}</>
                                     : <>已解锁成就：<span style={{ color: '#F59E0B' }}>{achUnlockedCount}</span> / {achievements.length}</>
@@ -60,10 +62,10 @@ export default function ArchivesModal({ onClose }) {
                         <button
                             onClick={onClose}
                             style={{
-                                background: '#F1F5F9', border: 'none', width: '40px', height: '40px',
-                                borderRadius: '50%', fontSize: '20px', cursor: 'pointer',
+                                background: '#F1F5F9', border: 'none', width: '36px', height: '36px',
+                                borderRadius: '50%', fontSize: '18px', cursor: 'pointer',
                                 color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s', flexShrink: 0
                             }}
                             onMouseOver={e => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#1E293B' }}
                             onMouseOut={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B' }}
@@ -73,7 +75,7 @@ export default function ArchivesModal({ onClose }) {
                     </div>
 
                     {/* 标签切换 + 积分面板 */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: isMobile ? '8px' : '0' }}>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             {[
                                 { key: 'endings', label: '🏆 结局图鉴' },
@@ -83,15 +85,16 @@ export default function ArchivesModal({ onClose }) {
                                     key={t.key}
                                     onClick={() => { setTab(t.key); setSelectedEnding(null); setSelectedAch(null); }}
                                     style={{
-                                        padding: '10px 24px',
+                                        padding: isMobile ? '8px 12px' : '10px 24px',
                                         background: tab === t.key ? '#1E293B' : 'transparent',
                                         color: tab === t.key ? 'white' : '#64748B',
                                         border: 'none',
                                         borderRadius: '12px 12px 0 0',
                                         fontWeight: '800',
-                                        fontSize: '14px',
+                                        fontSize: isMobile ? '13px' : '14px',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
+                                        flex: isMobile ? 1 : 'unset',
                                     }}
                                 >
                                     {t.label}
@@ -100,26 +103,26 @@ export default function ArchivesModal({ onClose }) {
                         </div>
 
                         {/* 积分面板 */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-end', paddingBottom: isMobile ? '8px' : '0' }}>
                             <div style={{
-                                padding: '6px 12px', borderRadius: '10px',
-                                background: '#EFF6FF', fontSize: '13px', fontWeight: '700', color: '#3B82F6'
+                                padding: '4px 10px', borderRadius: '10px',
+                                background: '#EFF6FF', fontSize: isMobile ? '11px' : '13px', fontWeight: '700', color: '#3B82F6', whiteSpace: 'nowrap'
                             }}>
-                                结局积分 {endingScore}
+                                结局 {endingScore}
                             </div>
                             <div style={{
-                                padding: '6px 12px', borderRadius: '10px',
-                                background: '#FFFBEB', fontSize: '13px', fontWeight: '700', color: '#D97706'
+                                padding: '4px 10px', borderRadius: '10px',
+                                background: '#FFFBEB', fontSize: isMobile ? '11px' : '13px', fontWeight: '700', color: '#D97706', whiteSpace: 'nowrap'
                             }}>
-                                成就积分 {achievementScore}
+                                成就 {achievementScore}
                             </div>
                             <div style={{
-                                padding: '8px 16px', borderRadius: '12px',
+                                padding: '5px 12px', borderRadius: '12px',
                                 background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                                fontSize: '14px', fontWeight: '900', color: 'white',
-                                boxShadow: '0 2px 8px rgba(245,158,11,0.3)'
+                                fontSize: isMobile ? '12px' : '14px', fontWeight: '900', color: 'white',
+                                boxShadow: '0 2px 8px rgba(245,158,11,0.3)', whiteSpace: 'nowrap'
                             }}>
-                                ⭐ 总积分 {totalScore}
+                                ⭐ 总分 {totalScore}
                             </div>
                         </div>
                     </div>

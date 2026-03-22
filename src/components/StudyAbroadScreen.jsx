@@ -4,9 +4,11 @@ import { overseasUniversities, canApplyUniversity } from '../data/overseas';
 import { getPortfolioScore } from '../data/postgrad';
 import IeltsScreen from './IeltsScreen';
 import { endings } from '../data/endings';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function StudyAbroadScreen() {
     const { state, dispatch } = useGame();
+    const isMobile = useIsMobile();
     const [showIelts, setShowIelts] = useState(false);
 
     const currentIelts = state.bestIelts || 0;
@@ -36,7 +38,7 @@ export default function StudyAbroadScreen() {
     };
 
     return (
-        <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+        <div className="screen-container" style={{ padding: isMobile ? '12px' : '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
             {showIelts && <IeltsScreen onClose={() => setShowIelts(false)} />}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -48,7 +50,7 @@ export default function StudyAbroadScreen() {
             </div>
 
             {/* 当前硬件条件看板 */}
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '12px' : '24px', marginBottom: isMobile ? '16px' : '32px' }}>
                 <div style={{ flex: 1, background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                         <div style={{ fontSize: '14px', color: '#64748B', marginBottom: '8px' }}>当前历史最高雅思成绩</div>
@@ -89,7 +91,7 @@ export default function StudyAbroadScreen() {
             )}
 
             {/* 院校库列表 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '20px', overflowY: 'auto' }}>
                 {overseasUniversities.map(uni => {
                     const isEligible = canApplyUniversity(uni, currentIelts, currentPS);
 

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
 import { competitions, judgeCompetition } from '../data/competitions';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function CompetitionScreen() {
     const { state, dispatch } = useGame();
+    const isMobile = useIsMobile();
     const [selectedComp, setSelectedComp] = useState(null);
     const [selectedProject, setSelectedProject] = useState(null);
     const [result, setResult] = useState(null);
@@ -81,13 +83,13 @@ export default function CompetitionScreen() {
     }
 
     return (
-        <div className="screen-container" style={{ padding: '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '28px', color: '#1E293B', margin: 0 }}>🏆 竞赛作品投递</h1>
+        <div className="screen-container" style={{ padding: isMobile ? '12px' : '40px', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '16px' : '24px' }}>
+                <h1 style={{ fontSize: isMobile ? '20px' : '28px', color: '#1E293B', margin: 0 }}>🏆 竞赛作品投递</h1>
                 <button onClick={handleClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✖</button>
             </div>
 
-            <div style={{ display: 'flex', gap: '24px', flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '12px' : '24px', flex: 1, minHeight: 0 }}>
                 {/* 竞赛列表 */}
                 <div style={{ flex: 1, background: 'white', borderRadius: '16px', padding: '24px', overflowY: 'auto', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                     <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#334155' }}>选择赛事</h3>

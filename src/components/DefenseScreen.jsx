@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
 import { defenseStrategies } from '../data/defense';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function DefenseScreen() {
     const { state, dispatch, ActionTypes } = useGame();
+    const isMobile = useIsMobile();
     const [selectedStrategy, setSelectedStrategy] = useState(null);
 
     const checkReqs = (strategy) => {
@@ -27,7 +29,7 @@ export default function DefenseScreen() {
     return (
         <div style={{
             height: '100%',
-            padding: '24px',
+            padding: isMobile ? '12px' : '24px',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
@@ -57,8 +59,8 @@ export default function DefenseScreen() {
             {/* 策略卡片网格 */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '14px',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: isMobile ? '10px' : '14px',
                 flex: 1,
                 overflowY: 'auto',
             }}>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useGame } from '../logic/gameState';
 import { shopItems } from '../data/shop';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 // 效果翻译
 const EFFECT_LABELS = {
@@ -24,6 +25,7 @@ function formatEffectTags(effect) {
 
 export default function ShopScreen() {
     const { state, dispatch, ActionTypes } = useGame();
+    const isMobile = useIsMobile();
     const { money } = state.attributes;
     const { inventory } = state;
 
@@ -45,11 +47,11 @@ export default function ShopScreen() {
 
     return (
         <div style={{
-            height: '100%',
-            padding: '24px',
+            height: isMobile ? 'auto' : '100%',
+            padding: isMobile ? '12px' : '24px',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden'
+            overflow: isMobile ? 'visible' : 'hidden'
         }}>
             {/* 标题栏 */}
             <div style={{
@@ -96,8 +98,8 @@ export default function ShopScreen() {
             {/* 商品列表 - 可滚动 */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '14px',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: isMobile ? '10px' : '14px',
                 overflowY: 'auto',
                 flex: 1,
                 paddingRight: '4px'

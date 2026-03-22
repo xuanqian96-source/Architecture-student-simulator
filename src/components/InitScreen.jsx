@@ -8,6 +8,7 @@ import LeaderboardModal from './LeaderboardModal';
 import { checkIdentityAchievements } from '../data/achievements';
 import { calculateTotalScore } from '../utils/scoreCalculator';
 import SaveManager from '../utils/saveManager';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 // ── 稀有度工具函数 ──────────────────────────────────────────────────────────
 // 概率 = school.probability × family.probability
@@ -76,6 +77,7 @@ export default function InitScreen() {
     const [drawnKeys, setDrawnKeys] = useState([]); // 已抽到的身份组合key，用于排除重复
     const [showArchives, setShowArchives] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const isMobile = useIsMobile();
     // 玩家名相关
     const [nameInput, setNameInput] = useState('');
     const [hasName, setHasName] = useState(SaveManager.hasPlayerName());
@@ -191,9 +193,11 @@ export default function InitScreen() {
     return (
         <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'column',
             minHeight: '100vh',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '20px'
+            padding: isMobile ? '12px' : '20px',
+            overflowY: 'auto',
         }}>
             <style>{`
                 @keyframes spin3d {
@@ -232,8 +236,8 @@ export default function InitScreen() {
 
             <div style={{
                 maxWidth: '580px', width: '100%',
-                background: 'white', borderRadius: '24px',
-                padding: '44px 44px 36px',
+                background: 'white', borderRadius: isMobile ? '16px' : '24px',
+                padding: isMobile ? '20px 16px 20px' : '44px 44px 36px',
                 boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
                 textAlign: 'center',
             }}>
@@ -306,17 +310,17 @@ export default function InitScreen() {
 
                 {/* ── 阶段 1：简介 ── */}
                 {phase === 'intro' && <>
-                    <h1 style={{ fontSize: '46px', fontWeight: '900', color: '#667eea', marginBottom: '8px', textAlign: 'center' }}>
+                    <h1 style={{ fontSize: isMobile ? '28px' : '46px', fontWeight: '900', color: '#667eea', marginBottom: '8px', textAlign: 'center' }}>
                         建筑生模拟器
                     </h1>
-                    <p style={{ fontSize: '17px', color: '#64748B', marginBottom: '28px', textAlign: 'center' }}>重生之我这一世绝不熬夜</p>
+                    <p style={{ fontSize: isMobile ? '14px' : '17px', color: '#64748B', marginBottom: isMobile ? '16px' : '28px', textAlign: 'center' }}>重生之我这一世绝不熬夜</p>
 
-                    <div style={{ background: '#F8FAFC', borderRadius: '16px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
+                    <div style={{ background: '#F8FAFC', borderRadius: '16px', padding: isMobile ? '14px' : '24px', marginBottom: isMobile ? '14px' : '24px', textAlign: 'center' }}>
                         <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
                             <p style={{ marginBottom: '12px', fontSize: '15px' }}><strong>嘿，{playerName || '准建筑师'}，准建筑师。</strong></p>
                             <p style={{ marginBottom: '16px' }}>这里没有普利兹克奖的红地毯，只有拉不完的线条和喝不完的红牛。<br />在《建筑生模拟器》中，你将开启一段为期五年的“非人”生活：</p>
 
-                            <div style={{ display: 'inline-block', textAlign: 'left', margin: '0 auto' }}>
+                            <div style={{ display: isMobile ? 'block' : 'inline-block', textAlign: 'left', margin: '0 auto' }}>
                                 <ul style={{ paddingLeft: '20px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <li><strong>博弈导师</strong>：在 7 位性格迥异（且可能都有点心理变态）的导师手下死里逃生。</li>
                                     <li><strong>经营作品集</strong>：每一张图纸都是你的职业命脉，是入职名企还是转行送外卖？全看这 60 周的选择与造化。</li>
@@ -545,60 +549,83 @@ export default function InitScreen() {
 
             {/* 顶层绝对定位的快捷设置与档案馆入口 */}
             {phase === 'intro' && (<>
-                <div style={{ position: 'fixed', bottom: '24px', right: '32px', zIndex: 100 }}>
-                    <button
-                        onClick={() => setShowArchives(true)}
-                        style={{
-                            background: 'rgba(255,255,255,0.15)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(255,255,255,0.3)',
-                            padding: '12px 20px',
-                            borderRadius: '16px',
-                            color: 'white',
-                            fontWeight: '800',
-                            fontSize: '15px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-                    >
-                        <span style={{ fontSize: '20px' }}>🏛️</span>
-                        档案馆：我的一百种人生
-                    </button>
-                </div>
-
-                {/* 排行榜按钮（左下角） */}
-                <div style={{ position: 'fixed', bottom: '24px', left: '32px', zIndex: 100 }}>
-                    <button
-                        onClick={() => setShowLeaderboard(true)}
-                        style={{
-                            background: 'rgba(255,255,255,0.15)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(255,255,255,0.3)',
-                            padding: '12px 20px',
-                            borderRadius: '16px',
-                            color: 'white',
-                            fontWeight: '800',
-                            fontSize: '15px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-                    >
-                        <span style={{ fontSize: '20px' }}>🏆</span>
-                        玩家排行榜
-                    </button>
-                </div>
+                {isMobile ? (
+                    /* 移动端：内联按钮，放在卡片下方 */
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', width: '100%' }}>
+                        <button
+                            onClick={() => setShowArchives(true)}
+                            style={{
+                                flex: 1, background: 'rgba(255,255,255,0.15)',
+                                backdropFilter: 'blur(8px)',
+                                border: '1px solid rgba(255,255,255,0.3)',
+                                padding: '10px 12px', borderRadius: '12px',
+                                color: 'white', fontWeight: '700', fontSize: '13px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: '6px', cursor: 'pointer',
+                            }}
+                        >
+                            🏛️ 档案馆
+                        </button>
+                        <button
+                            onClick={() => setShowLeaderboard(true)}
+                            style={{
+                                flex: 1, background: 'rgba(255,255,255,0.15)',
+                                backdropFilter: 'blur(8px)',
+                                border: '1px solid rgba(255,255,255,0.3)',
+                                padding: '10px 12px', borderRadius: '12px',
+                                color: 'white', fontWeight: '700', fontSize: '13px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: '6px', cursor: 'pointer',
+                            }}
+                        >
+                            🏆 排行榜
+                        </button>
+                    </div>
+                ) : (
+                    /* 桌面端：原有 fixed 定位 */
+                    <>
+                        <div style={{ position: 'fixed', bottom: '24px', right: '32px', zIndex: 100 }}>
+                            <button
+                                onClick={() => setShowArchives(true)}
+                                style={{
+                                    background: 'rgba(255,255,255,0.15)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255,255,255,0.3)',
+                                    padding: '12px 20px', borderRadius: '16px',
+                                    color: 'white', fontWeight: '800', fontSize: '15px',
+                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                            >
+                                <span style={{ fontSize: '20px' }}>🏛️</span>
+                                档案馆：我的一百种人生
+                            </button>
+                        </div>
+                        <div style={{ position: 'fixed', bottom: '24px', left: '32px', zIndex: 100 }}>
+                            <button
+                                onClick={() => setShowLeaderboard(true)}
+                                style={{
+                                    background: 'rgba(255,255,255,0.15)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255,255,255,0.3)',
+                                    padding: '12px 20px', borderRadius: '16px',
+                                    color: 'white', fontWeight: '800', fontSize: '15px',
+                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                            >
+                                <span style={{ fontSize: '20px' }}>🏆</span>
+                                玩家排行榜
+                            </button>
+                        </div>
+                    </>
+                )}
             </>)}
 
             {/* 档案馆模态窗 */}

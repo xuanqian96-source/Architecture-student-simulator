@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useGame } from '../logic/gameState';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function TutorDrawScreen() {
     const { state, dispatch, ActionTypes } = useGame();
     const [revealedCards, setRevealedCards] = useState([]);
     const [chosen, setChosen] = useState(null);
+    const isMobile = useIsMobile();
 
     const pending = state.pendingNewSemester;
     if (!pending) return null;
@@ -52,13 +54,14 @@ export default function TutorDrawScreen() {
 
     return (
         <div style={{
-            height: '100%',
+            height: isMobile ? 'auto' : '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '32px 24px',
+            justifyContent: isMobile ? 'flex-start' : 'center',
+            padding: isMobile ? '16px 12px' : '32px 24px',
             background: 'radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.08), transparent 60%)',
+            overflowY: isMobile ? 'auto' : 'visible',
         }}>
             {/* 标题 */}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -93,10 +96,11 @@ export default function TutorDrawScreen() {
             {/* 候选卡片 */}
             <div style={{
                 display: 'flex',
-                gap: '20px',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: isMobile ? '12px' : '20px',
                 justifyContent: 'center',
                 width: '100%',
-                maxWidth: '720px',
+                maxWidth: isMobile ? '100%' : '720px',
                 alignItems: 'stretch',
             }}>
                 {candidates.map((tutor, idx) => {
