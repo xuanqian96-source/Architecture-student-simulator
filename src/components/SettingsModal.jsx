@@ -164,9 +164,9 @@ export default function SettingsModal({ onClose }) {
                                 <button onClick={() => setPanel('about')} style={{ height: '60px', padding: '0', background: '#F8FAFC', border: '2px solid #E2E8F0', borderRadius: '16px', color: '#334155', fontWeight: '800', cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}>ℹ️ 作者的话</button>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                <button onClick={() => setPanel('archives')} style={{ height: '60px', padding: '0', background: '#F0FDF4', border: '2px solid #BBF7D0', borderRadius: '16px', color: '#166534', fontWeight: '800', cursor: 'pointer', fontSize: '14px', transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#DCFCE7'} onMouseOut={e => e.currentTarget.style.background = '#F0FDF4'}>
-                                    🏛️ 档案馆：我的一百种人生
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '8px' : '16px' }}>
+                                <button onClick={() => setPanel('archives')} style={{ height: '60px', padding: '0', background: '#F0FDF4', border: '2px solid #BBF7D0', borderRadius: '16px', color: '#166534', fontWeight: '800', cursor: 'pointer', fontSize: '15px', transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#DCFCE7'} onMouseOut={e => e.currentTarget.style.background = '#F0FDF4'}>
+                                    🏛️ 档案馆
                                 </button>
                                 
                                 <button onClick={() => setPanel('leaderboard')} style={{ height: '60px', padding: '0', background: '#FFF7ED', border: '2px solid #FED7AA', borderRadius: '16px', color: '#C2410C', fontWeight: '800', cursor: 'pointer', fontSize: '15px', transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseOver={e => e.currentTarget.style.background = '#FFEDD5'} onMouseOut={e => e.currentTarget.style.background = '#FFF7ED'}>
