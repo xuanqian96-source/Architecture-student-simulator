@@ -8,9 +8,12 @@ import { getQualityCap } from '../logic/calculator';
 import NarrativeWindow from './NarrativeWindow';
 import ActionCenter from './ActionCenter';
 import SettingsModal from './SettingsModal';
+import { useAchievementTracker } from '../hooks/useAchievementTracker';
+import { useAutoSave } from '../hooks/useAutoSave';
 
 export default function MainStage({ isMobile }) {
     const { state, dispatch } = useGame();
+    useAutoSave(state);
     const [showSettings, setShowSettings] = React.useState(false);
     const tutor = state.tutor;
     const mission = state.tutorMission;

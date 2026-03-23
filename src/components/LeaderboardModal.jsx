@@ -24,13 +24,20 @@ export default function LeaderboardModal({ onClose }) {
                 } catch (e) { /* 忽略同步失败 */ }
             }
 
-            // 再获取排行榜
+            // 获取排行榜
             const result = await SaveManager.getLeaderboard();
             if (result.success) {
                 setLeaderboard(result.data);
-                const idx = result.data.findIndex(p => p.playerName === playerName);
-                if (idx >= 0) setMyRank(idx + 1);
             }
+
+            // 获取玩家真实排名（即使不在 TOP 100 也能显示）
+            if (playerName) {
+                const rankResult = await SaveManager.getRank(playerName);
+                if (rankResult.success && rankResult.rank) {
+                    setMyRank(rankResult.rank);
+                }
+            }
+
             setLoading(false);
         };
 

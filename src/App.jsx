@@ -64,12 +64,7 @@ function GameContent() {
 
         {/* 主内容区 */}
         <div className="mobile-content">
-          {screen === 'game' && <MainStage isMobile />}
-          {screen === 'review' && <ReviewScreen />}
-          {screen === 'model' && <ModelScreen />}
-          {screen === 'shop' && <ShopScreen />}
-          {screen === 'job' && <JobScreen />}
-          {screen === 'choice' && <ChoiceScreen />}
+          {(screen === 'game' || screen === 'choice') && <MainStage isMobile />}
           {screen === 'defense' && <DefenseScreen />}
           {screen === 'reviewFlow' && <ReviewFlowScreen />}
           {screen === 'tutorDraw' && <TutorDrawScreen />}
@@ -85,7 +80,16 @@ function GameContent() {
         </div>
 
         {/* 游戏主界面显示底部行动栏 */}
-        {screen === 'game' && <MobileActionBar />}
+        {(screen === 'game' || screen === 'choice') && <MobileActionBar />}
+
+        {/* 交互事件覆盖弹窗（保持游戏主界面可见） */}
+        {screen === 'choice' && <ChoiceScreen />}
+
+        {/* 私活 / 商店 / 模型等全屏弹窗 */}
+        {screen === 'review' && <ReviewScreen />}
+        {screen === 'model' && <ModelScreen />}
+        {screen === 'shop' && <ShopScreen />}
+        {screen === 'job' && <JobScreen />}
 
         {/* 事件弹窗 */}
         <EventModal />

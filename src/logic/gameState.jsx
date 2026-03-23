@@ -140,6 +140,7 @@ export const ActionTypes = {
     DISMISS_GAME_TIP: 'DISMISS_GAME_TIP',
     START_EXPEDITION: 'START_EXPEDITION',
     DISMISS_EXPEDITION_COMPLETE: 'DISMISS_EXPEDITION_COMPLETE',
+    LOAD_AUTOSAVE: 'LOAD_AUTOSAVE',
 };
 
 // ===== 游戏提示生成辅助函数 =====
@@ -1657,6 +1658,22 @@ ${modelOption.description}
                     ...(initialState.ui || {}),
                     ...(cloudData.ui || {}),
                     screen: cloudData.ui?.screen || 'game'
+                }
+            };
+        }
+
+        case ActionTypes.LOAD_AUTOSAVE: {
+            const savedState = action.payload?.savedState;
+            if (!savedState) return state;
+            // 恢复完整的游戏状态，确保 UI 初始化正确
+            return {
+                ...savedState,
+                ui: {
+                    ...savedState.ui,
+                    // 确保不会残留弹窗状态
+                    showEventModal: false,
+                    currentEvent: null,
+                    moneyWarning: false
                 }
             };
         }

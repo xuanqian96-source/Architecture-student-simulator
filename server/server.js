@@ -235,6 +235,58 @@ app.get('/leaderboard', (req, res) => {
 });
 
 /**
+ * GET /rank — 获取指定玩家的全服排名
+ * 
+ * 查询参数：?playerName=张三
+ * 返回：{ success: true, rank: 121, totalPlayers: 150 }
+ */
+app.get('/rank', (req, res) => {
+    try {
+        const { playerName } = req.query;
+
+        if (!playerName || typeof playerName !== 'string' || playerName.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: '请提供玩家名称'
+            });
+        }
+
+        // 获取该玩家的积分
+        const playerStmt = db.prepare('SELECT score FROM players WHERE playerName = ?');
+        const player = playerStmt.get(playerName.trim());
+
+        if (!player) {
+            return res.json({
+                success: false,
+                message: '该玩家不存在'
+            });
+        }
+
+        // 统计比该玩家积分高的人数 + 1 = 排名
+        const rankStmt = db.prepare('SELECT COUNT(*) as cnt FROM players WHERE score > ? AND score > 0');
+        const rankRow = rankStmt.get(player.score);
+        const rank = player.score > 0 ? rankRow.cnt + 1 : null;
+
+        // 统计有积分的总玩家数
+        const totalStmt = db.prepare('SELECT COUNT(*) as cnt FROM players WHERE score > 0');
+        const totalRow = totalStmt.get();
+
+        res.json({
+            success: true,
+            rank: rank,
+            totalPlayers: totalRow.cnt
+        });
+
+    } catch (error) {
+        console.error('❌ 获取排名失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器内部错误'
+        });
+    }
+});
+
+/**
  * POST /update-score — 仅更新玩家积分（不影响 saveData）
  * 
  * 请求体：{ "playerName": "张三", "score": 1200 }

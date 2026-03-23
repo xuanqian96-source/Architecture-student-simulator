@@ -57,6 +57,21 @@ const SaveManager = {
     },
 
     /**
+     * 获取指定玩家的全服排名
+     * @param {string} playerName 玩家名称
+     * @returns {Promise<{success: boolean, rank?: number, totalPlayers?: number}>}
+     */
+    async getRank(playerName) {
+        try {
+            const res = await fetch(`${API_BASE}/rank?playerName=${encodeURIComponent(playerName)}`);
+            return await res.json();
+        } catch (error) {
+            console.error('❌ 获取排名失败:', error);
+            return { success: false, message: '网络错误，无法连接服务器' };
+        }
+    },
+
+    /**
      * 仅更新玩家积分（不影响 saveData）
      * @param {string} playerName 玩家名称
      * @param {number} score      最新总积分

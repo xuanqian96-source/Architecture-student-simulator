@@ -1,4 +1,4 @@
-// 私活选择界面
+// 私活选择界面 - 全屏遮罩 + 横版卡片布局
 
 import React from 'react';
 import { useGame } from '../logic/gameState';
@@ -24,19 +24,14 @@ export default function JobScreen() {
     };
 
     const handleTakeJob = (job) => {
-        // 检查本周是否已接过私活
         if (jobTakenThisWeek) return;
-        // 检查能力是否满足
         const req = job.requirement;
         if (req.software !== undefined && attributes.software < req.software) return;
         if (req.design !== undefined && attributes.design < req.design) return;
-        // 检查行动点
         if (isActionLimitReached) return;
-
         dispatch({ type: ActionTypes.TAKE_JOB, payload: { job } });
     };
 
-    // 判断某个私活是否满足能力要求
     const meetsRequirement = (job) => {
         const req = job.requirement;
         if (req.software !== undefined && attributes.software < req.software) return false;
@@ -46,192 +41,160 @@ export default function JobScreen() {
 
     return (
         <div style={{
-            height: '100%',
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
+            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99990, padding: '20px'
         }}>
-            {/* 标题栏 */}
             <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-                flexShrink: 0
+                background: '#F8FAFC', borderRadius: '24px', width: '100%', maxWidth: '680px',
+                maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden'
             }}>
-                <div>
-                    <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1E293B', margin: 0 }}>
-                        💼 私活市场
-                    </h2>
-                    <p style={{ fontSize: '13px', color: '#94A3B8', marginTop: '4px', marginBottom: 0 }}>
-                        接私活消耗 1 次行动点，同时获得金钱但增加压力
-                    </p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* 当前属性提示 */}
-                    <div style={{
-                        display: 'flex', gap: '8px',
-                        fontSize: '13px', fontWeight: '600', color: '#475569'
-                    }}>
-                        <span style={{ background: '#EFF6FF', color: '#3B82F6', padding: '4px 10px', borderRadius: '20px' }}>
-                            设计 {Math.floor(attributes.design)}
-                        </span>
-                        <span style={{ background: '#F0FDF4', color: '#10B981', padding: '4px 10px', borderRadius: '20px' }}>
-                            软件 {Math.floor(attributes.software)}
-                        </span>
-                    </div>
-                    <button
-                        onClick={handleClose}
-                        style={{
-                            padding: '8px 20px',
-                            background: '#64748B',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        返回游戏
-                    </button>
-                </div>
-            </div>
-
-            {/* 行动点耗尽提示 */}
-            {isActionLimitReached && (
+                {/* 标题区域 */}
                 <div style={{
-                    padding: '12px 16px',
-                    background: '#FEF3C7',
-                    border: '1px solid #F59E0B',
-                    borderRadius: '10px',
-                    marginBottom: '14px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#92400E',
-                    flexShrink: 0
+                    padding: '24px 28px 20px', background: 'white',
+                    borderBottom: '1px solid #E2E8F0', flexShrink: 0
                 }}>
-                    ⚠️ 本周行动次数已用完，无法接私活，请点击"下一周"推进时间
-                </div>
-            )}
-
-            {/* 本周已接私活提示 */}
-            {jobTakenThisWeek && !isActionLimitReached && (
-                <div style={{
-                    padding: '12px 16px',
-                    background: '#DBEAFE',
-                    border: '1px solid #3B82F6',
-                    borderRadius: '10px',
-                    marginBottom: '14px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#1E40AF',
-                    flexShrink: 0
-                }}>
-                    💼 本周已接取过私活，每周仅限接取一次，下周刷新
-                </div>
-            )}
-
-            {/* 私活列表 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '14px',
-                overflowY: 'auto',
-                flex: 1
-            }}>
-                {jobs.map(job => {
-                    const canDo = meetsRequirement(job) && !isActionLimitReached && !jobTakenThisWeek;
-                    const meetsReq = meetsRequirement(job);
-
-                    return (
-                        <div
-                            key={job.id}
-                            onClick={() => canDo && handleTakeJob(job)}
-                            style={{
-                                background: 'white',
-                                borderRadius: '14px',
-                                padding: '20px',
-                                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-                                border: canDo
-                                    ? '2px solid #E2E8F0'
-                                    : '2px solid #E2E8F0',
-                                opacity: canDo ? 1 : 0.55,
-                                cursor: canDo ? 'pointer' : 'not-allowed',
-                                transition: 'all 0.15s ease',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '10px'
-                            }}
-                            onMouseEnter={e => {
-                                if (canDo) e.currentTarget.style.borderColor = '#10B981';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.borderColor = '#E2E8F0';
-                            }}
-                        >
-                            {/* 名称 + 报酬 */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <span style={{ fontSize: '16px', fontWeight: '700', color: '#1E293B' }}>
-                                    {job.name}
-                                </span>
-                                <span style={{
-                                    fontSize: '16px',
-                                    fontWeight: '800',
-                                    color: canDo ? '#10B981' : '#94A3B8',
-                                    whiteSpace: 'nowrap',
-                                    marginLeft: '8px'
-                                }}>
-                                    + ¥{job.payment.toLocaleString()}
-                                </span>
-                            </div>
-
-                            {/* 能力要求 */}
-                            <div style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                fontSize: '12px',
-                                fontWeight: '700',
-                                color: meetsReq ? '#3B82F6' : '#EF4444',
-                                background: meetsReq ? '#EFF6FF' : '#FEF2F2',
-                                padding: '3px 10px',
-                                borderRadius: '20px',
-                                width: 'fit-content'
-                            }}>
-                                {meetsReq ? '✓' : '✗'} 要求：{formatRequirement(job.requirement)}
-                            </div>
-
-                            {/* 吐槽描述 */}
-                            <p style={{
-                                fontSize: '13px',
-                                color: '#64748B',
-                                margin: 0,
-                                lineHeight: '1.6',
-                                fontStyle: 'italic'
-                            }}>
-                                "{job.description}"
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1E293B', margin: '0 0 8px' }}>
+                                💼 私活市场
+                            </h2>
+                            <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                                接私活消耗 1 行动点，获得金钱但增加压力
                             </p>
-
-                            {/* 副作用提示 */}
-                            <div style={{
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                color: '#F59E0B'
-                            }}>
-                                ⚡ 接单后：压力 +20，消耗 1 行动点
-                            </div>
-
-                            {/* 能力不足标签 */}
-                            {!meetsReq && (
-                                <span style={{ fontSize: '12px', fontWeight: '600', color: '#EF4444' }}>
-                                    💔 能力不足，无法接单
-                                </span>
-                            )}
                         </div>
-                    );
-                })}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                            <div style={{ display: 'flex', gap: '6px', fontSize: '12px', fontWeight: '600' }}>
+                                <span style={{ background: '#EFF6FF', color: '#3B82F6', padding: '4px 8px', borderRadius: '20px' }}>
+                                    设计 {Math.floor(attributes.design)}
+                                </span>
+                                <span style={{ background: '#F0FDF4', color: '#10B981', padding: '4px 8px', borderRadius: '20px' }}>
+                                    软件 {Math.floor(attributes.software)}
+                                </span>
+                            </div>
+                            <button
+                                onClick={handleClose}
+                                style={{
+                                    padding: '8px 16px', background: '#64748B', color: 'white',
+                                    border: 'none', borderRadius: '8px', fontSize: '13px',
+                                    fontWeight: '600', cursor: 'pointer'
+                                }}
+                            >
+                                返回
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 状态提示 */}
+                    {isActionLimitReached && (
+                        <div style={{
+                            marginTop: '12px', padding: '10px 14px',
+                            background: '#FEF3C7', border: '1px solid #F59E0B',
+                            borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#92400E'
+                        }}>
+                            ⚠️ 本周行动次数已用完，无法接私活
+                        </div>
+                    )}
+                    {jobTakenThisWeek && !isActionLimitReached && (
+                        <div style={{
+                            marginTop: '12px', padding: '10px 14px',
+                            background: '#DBEAFE', border: '1px solid #3B82F6',
+                            borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#1E40AF'
+                        }}>
+                            💼 本周已接取过私活，每周仅限一次
+                        </div>
+                    )}
+                </div>
+
+                {/* 横版卡片列表 */}
+                <div style={{
+                    flex: 1, overflowY: 'auto', padding: '20px 24px',
+                    display: 'flex', flexDirection: 'column', gap: '12px'
+                }}>
+                    {jobs.map(job => {
+                        const canDo = meetsRequirement(job) && !isActionLimitReached && !jobTakenThisWeek;
+                        const meetsReq = meetsRequirement(job);
+
+                        return (
+                            <div
+                                key={job.id}
+                                onClick={() => canDo && handleTakeJob(job)}
+                                style={{
+                                    background: 'white', borderRadius: '16px',
+                                    padding: '18px 22px',
+                                    boxShadow: canDo
+                                        ? '0 4px 12px rgba(0,0,0,0.06)'
+                                        : '0 2px 6px rgba(0,0,0,0.04)',
+                                    border: canDo ? '2px solid #E2E8F0' : '2px solid #F1F5F9',
+                                    opacity: canDo ? 1 : 0.55,
+                                    cursor: canDo ? 'pointer' : 'not-allowed',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex', alignItems: 'center', gap: '18px'
+                                }}
+                                onMouseEnter={e => {
+                                    if (canDo) {
+                                        e.currentTarget.style.borderColor = '#10B981';
+                                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.15)';
+                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                    }
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = canDo ? '#E2E8F0' : '#F1F5F9';
+                                    e.currentTarget.style.boxShadow = canDo
+                                        ? '0 4px 12px rgba(0,0,0,0.06)'
+                                        : '0 2px 6px rgba(0,0,0,0.04)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                }}
+                            >
+                                {/* 左侧：名称 + 描述 + 要求 */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: '16px', fontWeight: '800', color: '#1E293B', marginBottom: '4px' }}>
+                                        {job.name}
+                                    </div>
+                                    <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 6px', lineHeight: '1.5', fontStyle: 'italic' }}>
+                                        "{job.description}"
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                        <span style={{
+                                            fontSize: '11px', fontWeight: '700', padding: '2px 8px',
+                                            borderRadius: '20px',
+                                            background: meetsReq ? '#EFF6FF' : '#FEF2F2',
+                                            color: meetsReq ? '#3B82F6' : '#EF4444'
+                                        }}>
+                                            {meetsReq ? '✓' : '✗'} {formatRequirement(job.requirement)}
+                                        </span>
+                                        <span style={{
+                                            fontSize: '11px', fontWeight: '600', padding: '2px 8px',
+                                            borderRadius: '20px', background: '#FEF3C7', color: '#D97706'
+                                        }}>
+                                            ⚡ 压力+20
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 右侧：报酬 */}
+                                <div style={{
+                                    display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
+                                    gap: '4px', flexShrink: 0
+                                }}>
+                                    <span style={{
+                                        fontSize: '20px', fontWeight: '900',
+                                        color: canDo ? '#10B981' : '#94A3B8'
+                                    }}>
+                                        +¥{job.payment.toLocaleString()}
+                                    </span>
+                                    {!meetsReq && (
+                                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#EF4444' }}>
+                                            💔 能力不足
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

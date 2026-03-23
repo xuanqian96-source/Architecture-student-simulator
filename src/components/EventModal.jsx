@@ -63,7 +63,7 @@ export default function EventModal() {
             <div style={{
                 position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1000
+                zIndex: 99990
             }} onClick={handleClose}>
                 <div style={{
                     background: 'white', borderRadius: '20px', padding: '32px',
@@ -138,7 +138,7 @@ export default function EventModal() {
             <div style={{
                 position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1000
+                zIndex: 99990
             }} onClick={handleDismissWarning}>
                 <div style={{
                     background: 'white', borderRadius: '20px', padding: '32px',
@@ -198,7 +198,7 @@ export default function EventModal() {
             <div style={{
                 position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1000
+                zIndex: 99990
             }} onClick={handleDismissTip}>
                 <div style={{
                     background: 'white', borderRadius: '20px', padding: '36px 32px 32px',
@@ -254,7 +254,7 @@ export default function EventModal() {
                 <div style={{
                     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 1000
+                    zIndex: 99990
                 }} onClick={handleDismiss}>
                     <div style={{
                         background: 'white', borderRadius: '20px', padding: '32px',
@@ -312,7 +312,7 @@ export default function EventModal() {
             <div style={{
                 position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1000
+                zIndex: 99990
             }} onClick={handleDismiss}>
                 <div style={{
                     background: 'linear-gradient(135deg, #F0F9FF, #E0F2FE)',

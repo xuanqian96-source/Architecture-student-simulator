@@ -9,6 +9,7 @@ import { checkIdentityAchievements } from '../data/achievements';
 import { calculateTotalScore } from '../utils/scoreCalculator';
 import SaveManager from '../utils/saveManager';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { getAutoSave, clearAutoSave } from '../hooks/useAutoSave';
 
 // ── 稀有度工具函数 ──────────────────────────────────────────────────────────
 // 概率 = school.probability × family.probability
@@ -85,6 +86,8 @@ export default function InitScreen() {
     // 云端存档相关
     const [hasCloudSave, setHasCloudSave] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
+    // 自动存档
+    const [autoSaveData, setAutoSaveData] = useState(null);
     const MAX_DRAWS = 3;
 
     if (!gameContext) {
@@ -104,6 +107,14 @@ export default function InitScreen() {
             }).catch(() => {});
         }
     }, [hasName, playerName]);
+
+    // 检查是否有自动存档
+    useEffect(() => {
+        const saved = getAutoSave();
+        if (saved && saved.state && saved.state.initialized) {
+            setAutoSaveData(saved);
+        }
+    }, []);
 
     // 老玩家积分自动同步：进入主页时静默上传积分到排行榜
     useEffect(() => {
@@ -157,12 +168,25 @@ export default function InitScreen() {
         setLoadingSave(false);
     };
 
+    // 加载自动存档
+    const handleLoadAutoSave = () => {
+        if (!autoSaveData?.state) return;
+        dispatch({ type: 'LOAD_AUTOSAVE', payload: { savedState: autoSaveData.state } });
+        clearAutoSave();
+        setAutoSaveData(null);
+    };
+
     const handleDraw = () => {
         // 开局首次抽卡 = 开启新游戏，清除旧存档（保留玩家名和积分）
         if (phase === 'intro' && hasCloudSave) {
             const pn = SaveManager.getPlayerName();
             if (pn) SaveManager.clearSave(pn);
             setHasCloudSave(false);
+        }
+        // 清除自动存档
+        if (phase === 'intro' && autoSaveData) {
+            clearAutoSave();
+            setAutoSaveData(null);
         }
 
         // 第一抽不计入3次重抽次数；如果是由于重抽按钮点击，则增加次数
@@ -350,11 +374,28 @@ export default function InitScreen() {
                         </p>
                     </div>
 
+                    {/* 自动存档继续按钮（优先显示） */}
+                    {autoSaveData && (
+                        <button onClick={handleLoadAutoSave} className="draw-btn" style={{
+                            width: '100%', padding: '17px', marginBottom: '12px',
+                            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                            color: 'white', border: 'none', borderRadius: '12px',
+                            fontSize: '19px', fontWeight: '700', cursor: 'pointer',
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                <span>💾 继续游戏</span>
+                                <span style={{ fontSize: '12px', fontWeight: '400', opacity: 0.85 }}>
+                                    (自动保存于 {autoSaveData.time ? new Date(autoSaveData.time).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '未知时间'})
+                                </span>
+                            </div>
+                        </button>
+                    )}
+
                     {/* 继续游戏按钮（仅有云端存档时显示） */}
-                    {hasCloudSave && (
+                    {hasCloudSave && !autoSaveData && (
                         <button onClick={handleLoadSave} disabled={loadingSave} className="draw-btn" style={{
                             width: '100%', padding: '17px', marginBottom: '12px',
-                            background: 'linear-gradient(135deg, #10B981, #059669)',
+                            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
                             color: 'white', border: 'none', borderRadius: '12px',
                             fontSize: '19px', fontWeight: '700', cursor: loadingSave ? 'wait' : 'pointer',
                         }}>
@@ -367,9 +408,9 @@ export default function InitScreen() {
                         background: 'linear-gradient(135deg,#667eea,#764ba2)',
                         color: 'white', border: 'none', borderRadius: '12px',
                         fontSize: '19px', fontWeight: '700', cursor: 'pointer',
-                        animation: hasCloudSave ? 'none' : 'pulse 2s infinite'
+                        animation: (hasCloudSave || autoSaveData) ? 'none' : 'pulse 2s infinite'
                     }}>
-                        🎲 {hasCloudSave ? '开启新游戏' : '开始游戏'}
+                        🎲 {(hasCloudSave || autoSaveData) ? '开启新游戏' : '开始游戏'}
                     </button>
                     <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '18px', textAlign: 'center' }}>
                         v1.0 Final Edition | Made with ❤️ for Architecture Students

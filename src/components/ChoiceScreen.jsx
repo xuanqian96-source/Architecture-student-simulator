@@ -17,7 +17,7 @@ export default function ChoiceScreen() {
         <div style={{
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 99990
         }}>
             <div style={{
                 background: 'white', borderRadius: '20px', padding: '32px',
